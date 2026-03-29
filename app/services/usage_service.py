@@ -75,6 +75,7 @@ class UsageService:
             "total_requests": row.total_requests or 0,
             "total_tokens": row.total_tokens or 0,
             "total_points": row.total_points or 0,
+            "total_cost": 0.0,  # 添加缺失的字段
             "avg_response_time": round(row.avg_response_time or 0, 2)
         }
 
@@ -213,6 +214,7 @@ class UsageService:
             "today_requests": today_stats["total_requests"],
             "today_tokens": today_stats["total_tokens"],
             "today_points": today_stats["total_points"],
+            "today_cost": 0.0,  # 添加缺失的字段
             "system_health": round(health_score, 1),
             "avg_response_time": avg_response_time,
             "recent_logs": recent_logs
