@@ -14,11 +14,13 @@ from app.models.user import User
 from app.models.upstream import UpstreamKey
 from app.services.upstream_service import UpstreamService
 from app.services.points_service import PointsService
+from app.core.encryption import decrypt_data
 from app.providers import (
     get_provider_from_model, 
     is_provider_allowed, 
     create_provider,
-    normalize_model_name
+    normalize_model_name,
+    OpenAICompatProvider
 )
 from app.core.config import get_settings
 
@@ -98,20 +100,66 @@ class ProxyService:
         max_retries = settings.MAX_RETRIES
         excluded_key_ids = []
         
+        # 首先查找匹配的 provider（在循环外查询一次）
+        from sqlalchemy import select
+        from app.models.upstream import UpstreamProvider
+        
+        # 首先尝试通过名称或类型匹配
+        provider_result = await db.execute(
+            select(UpstreamProvider).where(
+                UpstreamProvider.name.ilike(f"%{provider_name}%") |
+                (UpstreamProvider.provider_type == provider_name)
+            )
+        )
+        provider_record = provider_result.scalar_one_or_none()
+        
+        # 如果未找到，尝试通过 model_mapping 匹配
+        if not provider_record:
+            all_providers_result = await db.execute(select(UpstreamProvider))
+            all_providers = all_providers_result.scalars().all()
+            for p in all_providers:
+                if p.model_mapping and actual_model in p.model_mapping:
+                    provider_record = p
+                    break
+        
+        if not provider_record:
+            yield (f"Provider not found: {provider_name}", None, None)
+            return
+        
+        # 应用 model_mapping 转换模型名称
+        mapped_model = provider_record.model_mapping.get(actual_model, actual_model) if provider_record.model_mapping else actual_model
+        
         for attempt in range(max_retries):
-            # 获取可用的上游 Key
-            key_data = await UpstreamService.get_available_key_by_provider(
-                db, provider_name, exclude_key_id=excluded_key_ids[-1] if excluded_key_ids else None
+            # 获取可用的 keys
+            keys = await UpstreamService.list_keys(
+                db, 
+                provider_id=provider_record.id,
+                available_only=True,
+                limit=100
             )
             
-            if not key_data:
+            if excluded_key_ids:
+                keys = [k for k in keys if k.id not in excluded_key_ids]
+            
+            if not keys:
                 yield ("No available upstream key for this provider", None, None)
                 return
             
-            upstream_key, decrypted_key = key_data
+            # 简单选择第一个 key
+            upstream_key = keys[0]
+            decrypted_key = decrypt_data(upstream_key.encrypted_key)
+            if not decrypted_key:
+                yield ("Failed to decrypt API key", None, None)
+                return
             
             # 创建 provider 实例
-            provider = create_provider(provider_name, decrypted_key)
+            if provider_record and provider_record.base_url:
+                # 使用数据库中的自定义配置
+                provider = OpenAICompatProvider(api_key=decrypted_key, base_url=provider_record.base_url)
+            else:
+                # 使用白名单中的标准配置
+                provider = create_provider(provider_name, decrypted_key)
+            
             if not provider:
                 yield (f"Unsupported provider: {provider_name}", None, None)
                 return
@@ -121,7 +169,7 @@ class ProxyService:
                     # 流式响应
                     total_tokens = 0
                     async for chunk in provider.chat_completion_stream(
-                        model=actual_model,
+                        model=mapped_model,
                         messages=messages,
                         temperature=kwargs.get("temperature", 0.7),
                         max_tokens=kwargs.get("max_tokens", 2000)
@@ -141,7 +189,7 @@ class ProxyService:
                 else:
                     # 非流式响应
                     response = await provider.chat_completion(
-                        model=actual_model,
+                        model=mapped_model,
                         messages=messages,
                         temperature=kwargs.get("temperature", 0.7),
                         max_tokens=kwargs.get("max_tokens", 2000)
@@ -189,9 +237,33 @@ class ProxyService:
         # 解析 provider 和实际模型名
         provider_name, actual_model = get_provider_from_model(model)
         
-        # SSRF 安全检查
+        # SSRF 安全检查 - 检查白名单或数据库中的自定义 provider
         if not is_provider_allowed(provider_name):
-            raise HTTPException(status_code=400, detail=f"Provider not allowed: {provider_name}")
+            # 检查是否是数据库中的自定义 provider
+            # 通过 model_mapping 查找匹配的 provider
+            from sqlalchemy import select
+            from app.models.upstream import UpstreamProvider
+            
+            # 获取所有自定义 provider
+            result = await db.execute(select(UpstreamProvider))
+            all_providers = result.scalars().all()
+            
+            custom_provider = None
+            for p in all_providers:
+                if p.model_mapping and actual_model in p.model_mapping:
+                    custom_provider = p
+                    provider_name = p.name  # 更新 provider_name
+                    break
+            
+            if not custom_provider:
+                # 再尝试通过名称匹配
+                result = await db.execute(
+                    select(UpstreamProvider).where(UpstreamProvider.name.ilike(f"%{provider_name}%"))
+                )
+                custom_provider = result.scalar_one_or_none()
+            
+            if not custom_provider:
+                raise HTTPException(status_code=400, detail=f"Provider not allowed: {provider_name}")
         
         # 获取消息
         messages = body.get("messages", [])

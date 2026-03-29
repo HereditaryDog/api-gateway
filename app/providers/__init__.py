@@ -18,6 +18,8 @@ PROVIDER_BASE_URLS: Dict[str, str] = {
     "zhipu": "https://open.bigmodel.cn/api/paas/v4",
     "alibaba": "https://dashscope.aliyuncs.com/compatible-mode/v1",
     "baidu": "https://qianfan.baidubce.com/v2",
+    "volcengine": "https://ark.cn-beijing.volces.com/api/v3",
+    "doubao": "https://ark.cn-beijing.volces.com/api/v3",
     # mock provider：仅用于开发和测试
     "mock": "http://mock.internal/v1",
 }
