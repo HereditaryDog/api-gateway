@@ -99,8 +99,20 @@
         }
         .sidebar-header { padding: 24px; border-bottom: 1px solid var(--border-color); }
         .sidebar-logo { display: flex; align-items: center; gap: 12px; }
-        .sidebar-logo i { font-size: 32px; color: var(--accent-blue); }
-        .sidebar-logo span { font-size: 20px; font-weight: 700; }
+        .sidebar-logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            font-weight: 700;
+        }
+        .sidebar-logo-text { font-size: 18px; font-weight: 700; }
+        .sidebar-logo-version { font-size: 11px; color: var(--text-muted); }
         .nav-menu { padding: 16px 12px; }
         .nav-item {
             display: flex;
@@ -138,18 +150,91 @@
         .main-content {
             flex: 1;
             margin-left: 260px;
-            padding: 24px 32px;
             background: var(--bg-primary);
             min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
+        
+        /* 顶部标题栏 */
+        .top-header {
+            height: 64px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+        
+        .page-title h1 { font-size: 20px; font-weight: 600; }
+        .page-title p { color: var(--text-secondary); font-size: 13px; }
+        
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .header-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .header-btn:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+        
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 6px 12px 6px 6px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        
+        .user-info {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .user-name {
+            font-size: 13px;
+            font-weight: 600;
+        }
+        
+        .user-role {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+        
+        .content-area {
+            flex: 1;
+            padding: 24px 32px;
+        }
+        
         .page-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 24px;
         }
-        .page-title h1 { font-size: 24px; font-weight: 700; }
-        .page-title p { color: var(--text-secondary); font-size: 14px; margin-top: 4px; }
         
         .stats-grid {
             display: grid;
@@ -287,8 +372,11 @@
         <aside class="sidebar">
             <div class="sidebar-header">
                 <div class="sidebar-logo">
-                    <i class="fas fa-network-wired"></i>
-                    <span>API Gateway</span>
+                    <div class="sidebar-logo-icon">A</div>
+                    <div>
+                        <div class="sidebar-logo-text">API Gateway</div>
+                        <div class="sidebar-logo-version">Admin v0.1.0</div>
+                    </div>
                 </div>
             </div>
             <nav class="nav-menu">
@@ -322,6 +410,28 @@
 
         <!-- 主内容 -->
         <main class="main-content">
+            <!-- 顶部标题栏 -->
+            <header class="top-header">
+                <div class="page-title">
+                    <h1 id="pageTitle">监控大盘</h1>
+                    <p id="pageSubtitle">实时监控平台运行状态</p>
+                </div>
+                <div class="header-actions">
+                    <button class="header-btn" onclick="loadDashboard()">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                    <div class="user-menu" onclick="logout()">
+                        <div class="user-avatar" id="userAvatar">A</div>
+                        <div class="user-info">
+                            <span class="user-name" id="userName">Admin</span>
+                            <span class="user-role">系统管理员</span>
+                        </div>
+                        <i class="fas fa-chevron-down" style="font-size: 10px; color: var(--text-muted);"></i>
+                    </div>
+                </div>
+            </header>
+
+            <div class="content-area">
             <!-- 监控大盘 -->
             <div id="dashboardView" class="view active">
                 <div class="page-header">
@@ -475,6 +585,7 @@
                     </div>
                 </div>
             </div>
+            </div>
         </main>
     </div>
 
@@ -488,6 +599,12 @@
             document.getElementById('loginPage').classList.add('hidden');
             document.getElementById('appPage').classList.remove('hidden');
             loadDashboard();
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            token = null;
+            location.reload();
         }
 
         async function login() {

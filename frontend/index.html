@@ -7,143 +7,76 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <style>
         :root {
-            --primary: #6366f1;
-            --primary-dark: #4f46e5;
-            --primary-light: #818cf8;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --dark: #0f172a;
-            --dark-light: #1e293b;
-            --gray: #64748b;
-            --gray-light: #94a3b8;
-            --bg: #f1f5f9;
-            --card-bg: #ffffff;
-            --border: #e2e8f0;
-            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #111827;
+            --bg-card: #1a1f2e;
+            --bg-hover: #242b3d;
+            --border-color: #2d3748;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-yellow: #f59e0b;
+            --accent-red: #ef4444;
+            --accent-teal: #14b8a6;
+            --accent-purple: #8b5cf6;
+            --accent-cyan: #06b6d4;
         }
-
+        
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
+        
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: var(--bg);
-            color: var(--dark);
+            background: var(--bg-primary);
+            color: var(--text-primary);
             line-height: 1.6;
         }
-
+        
         /* 登录页 */
         .login-page {
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            background: radial-gradient(ellipse at top, #1a1f2e 0%, #0a0e1a 100%);
             padding: 20px;
         }
-
+        
         .login-box {
-            background: var(--card-bg);
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
             border-radius: 16px;
-            padding: 40px;
+            padding: 48px;
             width: 100%;
             max-width: 420px;
-            box-shadow: var(--shadow-lg);
         }
-
+        
         .login-logo {
             text-align: center;
-            margin-bottom: 32px;
+            margin-bottom: 40px;
         }
-
+        
         .login-logo i {
-            font-size: 48px;
-            color: var(--primary);
+            font-size: 56px;
+            color: var(--accent-blue);
             margin-bottom: 16px;
         }
-
+        
         .login-logo h1 {
-            font-size: 24px;
+            font-size: 28px;
             font-weight: 700;
-            color: var(--dark);
         }
-
+        
         .login-logo p {
-            color: var(--gray);
+            color: var(--text-secondary);
             font-size: 14px;
-            margin-top: 4px;
+            margin-top: 8px;
         }
-
-        .form-group { margin-bottom: 20px; }
-
-        .form-group label {
-            display: block;
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--dark);
-            margin-bottom: 8px;
-        }
-
-        .input-wrapper { position: relative; }
-
-        .input-wrapper i {
-            position: absolute;
-            left: 16px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--gray-light);
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 12px 16px 12px 44px;
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            font-size: 15px;
-            transition: all 0.2s;
-            background: var(--card-bg);
-        }
-
-        .form-control:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-        }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 10px;
-            font-size: 15px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-            width: 100%;
-        }
-
-        .btn-primary:hover {
-            background: var(--primary-dark);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
-        }
-
-        .btn-sm { padding: 8px 16px; font-size: 13px; }
-        .btn-success { background: var(--success); color: white; }
-        .btn-warning { background: var(--warning); color: white; }
-        .btn-danger { background: var(--danger); color: white; }
-
+        
         .alert {
             padding: 12px 16px;
             border-radius: 8px;
@@ -151,53 +84,133 @@
             margin-bottom: 20px;
             display: none;
         }
-
+        
         .alert-error {
-            background: #fef2f2;
-            color: var(--danger);
-            border: 1px solid #fecaca;
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--accent-red);
+            border: 1px solid rgba(239, 68, 68, 0.2);
         }
-
-        /* 主布局 */
+        
+        .form-group { margin-bottom: 24px; }
+        
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+        
+        .input-wrapper { position: relative; }
+        
+        .input-wrapper i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 14px 16px 14px 48px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 15px;
+            color: var(--text-primary);
+            outline: none;
+            transition: all 0.2s;
+        }
+        
+        .form-control:focus {
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+            color: white;
+            width: 100%;
+        }
+        
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+        
+        /* 主应用布局 */
         .app-layout {
             display: flex;
             min-height: 100vh;
         }
-
+        
         /* 侧边栏 */
         .sidebar {
             width: 260px;
-            background: var(--dark);
-            color: white;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
             position: fixed;
             height: 100vh;
-            overflow-y: auto;
             z-index: 100;
+            display: flex;
+            flex-direction: column;
         }
-
+        
         .sidebar-header {
-            padding: 24px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
         }
-
+        
         .sidebar-logo {
             display: flex;
             align-items: center;
             gap: 12px;
         }
-
-        .sidebar-logo i {
-            font-size: 28px;
-            color: var(--primary-light);
+        
+        .sidebar-logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            font-weight: 700;
         }
-
-        .sidebar-logo span {
+        
+        .sidebar-logo-text {
             font-size: 18px;
             font-weight: 700;
         }
-
-        .nav-menu { padding: 16px 12px; }
-
+        
+        .sidebar-logo-version {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+        
+        .nav-menu {
+            padding: 16px 12px;
+            flex: 1;
+            overflow-y: auto;
+        }
+        
         .nav-item {
             display: flex;
             align-items: center;
@@ -205,82 +218,161 @@
             padding: 12px 16px;
             border-radius: 10px;
             cursor: pointer;
-            transition: all 0.2s;
             margin-bottom: 4px;
-            color: rgba(255,255,255,0.7);
+            color: var(--text-secondary);
+            transition: all 0.2s;
         }
-
+        
         .nav-item:hover {
-            background: rgba(255,255,255,0.1);
-            color: white;
+            background: var(--bg-hover);
+            color: var(--text-primary);
         }
-
+        
         .nav-item.active {
-            background: var(--primary);
-            color: white;
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--accent-blue);
         }
-
-        .nav-item i { width: 20px; text-align: center; }
-        .nav-item span { font-size: 14px; font-weight: 500; }
-
+        
+        .nav-item i {
+            width: 20px;
+            text-align: center;
+        }
+        
         .sidebar-footer {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
             padding: 16px;
-            border-top: 1px solid rgba(255,255,255,0.1);
+            border-top: 1px solid var(--border-color);
         }
-
-        .user-info {
+        
+        .theme-toggle {
             display: flex;
             align-items: center;
             gap: 12px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            color: var(--text-secondary);
         }
-
+        
+        .theme-toggle:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+        
+        /* 主内容区 */
+        .main-content {
+            flex: 1;
+            margin-left: 260px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* 顶部标题栏 */
+        .top-header {
+            height: 64px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+        
+        .page-title h1 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+        
+        .page-title p {
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+        
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .header-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .header-btn:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+        
+        .balance-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-weight: 600;
+            color: var(--accent-green);
+        }
+        
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 6px 12px 6px 6px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        
         .user-avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background: var(--primary);
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 600;
             font-size: 14px;
         }
-
-        .user-meta { flex: 1; }
-
-        .user-name { font-size: 14px; font-weight: 500; }
-        .user-role { font-size: 12px; color: rgba(255,255,255,0.5); }
-
-        /* 主内容区 */
-        .main-content {
-            flex: 1;
-            margin-left: 260px;
-            padding: 24px 32px;
-        }
-
-        .page-header {
+        
+        .user-info {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
+            flex-direction: column;
         }
-
-        .page-title h1 {
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--dark);
+        
+        .user-name {
+            font-size: 13px;
+            font-weight: 600;
         }
-
-        .page-title p {
-            color: var(--gray);
-            font-size: 14px;
-            margin-top: 4px;
+        
+        .user-role {
+            font-size: 11px;
+            color: var(--text-muted);
         }
-
+        
+        /* 内容区 */
+        .content-area {
+            flex: 1;
+            padding: 24px 32px;
+            overflow-y: auto;
+        }
+        
         /* 统计卡片 */
         .stats-grid {
             display: grid;
@@ -288,285 +380,485 @@
             gap: 20px;
             margin-bottom: 24px;
         }
-
+        
         .stat-card {
-            background: var(--card-bg);
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
             border-radius: 12px;
-            padding: 24px;
-            box-shadow: var(--shadow);
-            display: flex;
-            align-items: flex-start;
-            gap: 16px;
+            padding: 20px;
         }
-
+        
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+        
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        
         .stat-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
+            font-size: 16px;
         }
-
-        .stat-icon.purple { background: rgba(99, 102, 241, 0.1); color: var(--primary); }
-        .stat-icon.green { background: rgba(16, 185, 129, 0.1); color: var(--success); }
-        .stat-icon.orange { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
-        .stat-icon.blue { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
-
-        .stat-info h3 {
-            font-size: 28px;
+        
+        .stat-icon.blue { background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); }
+        .stat-icon.green { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); }
+        .stat-icon.yellow { background: rgba(245, 158, 11, 0.15); color: var(--accent-yellow); }
+        .stat-icon.red { background: rgba(239, 68, 68, 0.15); color: var(--accent-red); }
+        .stat-icon.purple { background: rgba(139, 92, 246, 0.15); color: var(--accent-purple); }
+        .stat-icon.teal { background: rgba(20, 184, 166, 0.15); color: var(--accent-teal); }
+        .stat-icon.cyan { background: rgba(6, 182, 212, 0.15); color: var(--accent-cyan); }
+        
+        .stat-value {
+            font-size: 24px;
             font-weight: 700;
-            color: var(--dark);
+            margin-bottom: 4px;
         }
-
-        .stat-info p {
-            font-size: 13px;
-            color: var(--gray);
-            margin-top: 4px;
+        
+        .stat-value.green { color: var(--accent-green); }
+        .stat-value.yellow { color: var(--accent-yellow); }
+        
+        .stat-subtitle {
+            font-size: 12px;
+            color: var(--text-muted);
         }
-
-        /* 内容卡片 */
+        
+        /* 卡片组件 */
         .card {
-            background: var(--card-bg);
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
             border-radius: 12px;
-            box-shadow: var(--shadow);
             margin-bottom: 24px;
         }
-
+        
         .card-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 20px 24px;
-            border-bottom: 1px solid var(--border);
+            border-bottom: 1px solid var(--border-color);
         }
-
+        
         .card-title {
             font-size: 16px;
             font-weight: 600;
         }
-
-        .card-body { padding: 20px 24px; }
-
+        
+        .card-body {
+            padding: 20px 24px;
+        }
+        
+        .card-body.no-padding {
+            padding: 0;
+        }
+        
+        /* 筛选栏 */
+        .filter-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .filter-select, .filter-input {
+            padding: 10px 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            color: var(--text-primary);
+            outline: none;
+        }
+        
+        .filter-input {
+            flex: 1;
+            max-width: 300px;
+        }
+        
+        .btn-sm {
+            padding: 10px 16px;
+            font-size: 13px;
+        }
+        
+        .btn-success {
+            background: var(--accent-green);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #0da271;
+        }
+        
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--bg-hover);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+        
+        .btn-outline:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+        
         /* 表格 */
         .data-table {
             width: 100%;
             border-collapse: collapse;
         }
-
+        
         .data-table th,
         .data-table td {
-            padding: 14px 16px;
+            padding: 14px 20px;
             text-align: left;
-            border-bottom: 1px solid var(--border);
+            border-bottom: 1px solid var(--border-color);
         }
-
+        
         .data-table th {
             font-size: 12px;
             font-weight: 600;
-            color: var(--gray);
+            color: var(--text-secondary);
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            background: var(--bg);
+            background: var(--bg-secondary);
         }
-
-        .data-table tr:hover { background: var(--bg); }
-
+        
+        .data-table tr:hover {
+            background: var(--bg-hover);
+        }
+        
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        /* 徽章 */
         .badge {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            padding: 6px 12px;
-            border-radius: 20px;
+            padding: 4px 10px;
+            border-radius: 6px;
             font-size: 12px;
             font-weight: 500;
         }
-
-        .badge-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
+        
+        .badge-success {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent-green);
         }
-
-        .badge-success { background: #d1fae5; color: #065f46; }
-        .badge-success .badge-dot { background: var(--success); }
-        .badge-warning { background: #fef3c7; color: #92400e; }
-        .badge-warning .badge-dot { background: var(--warning); }
-        .badge-danger { background: #fee2e2; color: #991b1b; }
-        .badge-danger .badge-dot { background: var(--danger); }
-
-        /* 积分显示 */
-        .points-display {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 16px;
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: white;
-            border-radius: 20px;
-            font-weight: 600;
+        
+        .badge-info {
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--accent-blue);
         }
-
-        /* 模态框 */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.2s;
+        
+        .badge-warning {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--accent-yellow);
         }
-
-        .modal-overlay.active {
-            opacity: 1;
-            visibility: visible;
+        
+        /* 密钥标签 */
+        .key-tag {
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 12px;
+            padding: 4px 10px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-secondary);
         }
-
-        .modal {
-            background: var(--card-bg);
-            border-radius: 16px;
-            width: 90%;
-            max-width: 480px;
-            transform: scale(0.95);
-            transition: all 0.2s;
+        
+        /* 图表容器 */
+        .chart-container {
+            position: relative;
+            height: 300px;
         }
-
-        .modal-overlay.active .modal { transform: scale(1); }
-
-        .modal-header {
-            padding: 24px 24px 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        
+        .chart-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 24px;
         }
-
-        .modal-title { font-size: 18px; font-weight: 600; }
-
-        .modal-close {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            color: var(--gray);
-            transition: all 0.2s;
+        
+        /* 快捷操作 */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
         }
-
-        .modal-close:hover {
-            background: var(--bg);
-            color: var(--dark);
-        }
-
-        .modal-body { padding: 20px 24px; }
-
-        .modal-footer {
-            padding: 0 24px 24px;
-            display: flex;
-            gap: 12px;
-            justify-content: flex-end;
-        }
-
-        .btn-secondary {
-            background: var(--bg);
-            color: var(--dark);
-        }
-
-        .btn-secondary:hover { background: var(--border); }
-
-        /* API Key 展示 */
-        .api-key-box {
-            background: var(--bg);
+        
+        .quick-action-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
             border-radius: 10px;
             padding: 16px;
             display: flex;
             align-items: center;
-            gap: 12px;
-            margin: 16px 0;
-        }
-
-        .api-key-text {
-            flex: 1;
-            font-family: 'Monaco', 'Consolas', monospace;
-            font-size: 13px;
-            color: var(--dark);
-            word-break: break-all;
-        }
-
-        .api-key-copy {
-            width: 36px;
-            height: 36px;
-            border-radius: 8px;
-            border: none;
-            background: white;
+            gap: 16px;
             cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .quick-action-card:hover {
+            background: var(--bg-hover);
+            border-color: var(--accent-blue);
+        }
+        
+        .quick-action-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--accent-blue);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--gray);
-            transition: all 0.2s;
+            font-size: 20px;
         }
-
-        .api-key-copy:hover {
-            background: var(--primary);
+        
+        .quick-action-content h4 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .quick-action-content p {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        
+        /* 分页 */
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .pagination-info {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        
+        .pagination-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .page-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        
+        .page-btn:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+        
+        .page-btn.active {
+            background: var(--accent-blue);
             color: white;
+            border-color: var(--accent-blue);
         }
-
-        /* 空状态 */
-        .empty-state {
+        
+        /* 视图切换 */
+        .view { display: none; }
+        .view.active { display: block; }
+        .hidden { display: none !important; }
+        
+        /* 兑换码页面 */
+        .balance-card {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border-radius: 16px;
+            padding: 40px;
             text-align: center;
-            padding: 60px 20px;
+            margin-bottom: 24px;
         }
-
-        .empty-state i {
-            font-size: 64px;
-            color: var(--border);
-            margin-bottom: 16px;
-        }
-
-        .empty-state h3 {
-            font-size: 16px;
-            color: var(--dark);
+        
+        .balance-label {
+            font-size: 14px;
+            opacity: 0.9;
             margin-bottom: 8px;
         }
-
-        .empty-state p {
-            font-size: 14px;
-            color: var(--gray);
+        
+        .balance-value {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 8px;
         }
-
-        /* 代码块 */
-        .code-block {
-            background: var(--dark);
-            color: #e2e8f0;
-            padding: 16px;
-            border-radius: 8px;
-            font-family: 'Monaco', 'Consolas', monospace;
+        
+        .balance-subtitle {
             font-size: 13px;
-            overflow-x: auto;
-            margin: 12px 0;
+            opacity: 0.8;
         }
-
-        .code-block .comment { color: #64748b; }
-        .code-block .string { color: #a5d6ff; }
-        .code-block .keyword { color: #ff7b72; }
-
-        .hidden { display: none !important; }
-
+        
+        /* 活动列表 */
+        .activity-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .activity-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+        }
+        
+        .activity-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent-green);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .activity-info h4 {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+        
+        .activity-info p {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        
+        .activity-amount {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--accent-green);
+        }
+        
+        /* 个人资料 */
+        .profile-header {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+        
+        .profile-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+        }
+        
+        .profile-card-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: var(--bg-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 12px;
+            font-size: 20px;
+            color: var(--accent-blue);
+        }
+        
+        .profile-card-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+        
+        .profile-card-value {
+            font-size: 24px;
+            font-weight: 700;
+        }
+        
+        .profile-info-card {
+            background: linear-gradient(135deg, #1a1f2e 0%, #242b3d 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .profile-avatar-large {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 700;
+        }
+        
+        .profile-info-content h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .profile-info-meta {
+            display: flex;
+            gap: 16px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        
+        /* 响应式 */
         @media (max-width: 1200px) {
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .chart-grid { grid-template-columns: 1fr; }
         }
-
+        
         @media (max-width: 768px) {
-            .sidebar { transform: translateX(-100%); }
-            .main-content { margin-left: 0; }
+            .sidebar { width: 200px; }
+            .main-content { margin-left: 200px; }
             .stats-grid { grid-template-columns: 1fr; }
+            .quick-actions { grid-template-columns: 1fr; }
+            .profile-header { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -578,7 +870,7 @@
                 <i class="fas fa-network-wired"></i>
                 <div>
                     <h1>API Gateway</h1>
-                    <p>智能 API 转发管理平台</p>
+                    <p>智能 API 转发运维平台</p>
                 </div>
             </div>
             <div id="loginError" class="alert alert-error"></div>
@@ -586,14 +878,14 @@
                 <label>用户名</label>
                 <div class="input-wrapper">
                     <i class="fas fa-user"></i>
-                    <input type="text" id="username" class="form-control" placeholder="请输入用户名">
+                    <input type="text" id="username" class="form-control" placeholder="请输入用户名" value="admin">
                 </div>
             </div>
             <div class="form-group">
                 <label>密码</label>
                 <div class="input-wrapper">
                     <i class="fas fa-lock"></i>
-                    <input type="password" id="password" class="form-control" placeholder="请输入密码">
+                    <input type="password" id="password" class="form-control" placeholder="请输入密码" value="admin123">
                 </div>
             </div>
             <button class="btn btn-primary" onclick="login()">
@@ -603,363 +895,673 @@
     </div>
 
     <!-- 主应用 -->
-    <div id="appPage" class="hidden">
-        <div class="app-layout">
-            <aside class="sidebar">
-                <div class="sidebar-header">
-                    <div class="sidebar-logo">
-                        <i class="fas fa-network-wired"></i>
-                        <span>API Gateway</span>
+    <div id="appPage" class="app-layout hidden">
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <div class="sidebar-logo-icon">A</div>
+                    <div>
+                        <div class="sidebar-logo-text">API Gateway</div>
+                        <div class="sidebar-logo-version">v0.1.0</div>
                     </div>
                 </div>
-                <nav class="nav-menu">
-                    <div class="nav-item active" onclick="navTo('dashboard')">
-                        <i class="fas fa-chart-line"></i>
-                        <span>仪表盘</span>
-                    </div>
-                    <div class="nav-item" onclick="navTo('users')">
-                        <i class="fas fa-users"></i>
-                        <span>用户管理</span>
-                    </div>
-                    <div class="nav-item" onclick="navTo('upstream')">
-                        <i class="fas fa-server"></i>
-                        <span>上游管理</span>
-                    </div>
-                    <div class="nav-item" onclick="navTo('usage')">
-                        <i class="fas fa-chart-bar"></i>
-                        <span>使用统计</span>
-                    </div>
-                    <div class="nav-item" onclick="navTo('docs')">
-                        <i class="fas fa-book"></i>
-                        <span>接口文档</span>
-                    </div>
-                </nav>
-                <div class="sidebar-footer">
-                    <div class="user-info">
-                        <div class="user-avatar" id="userAvatar">A</div>
-                        <div class="user-meta">
-                            <div class="user-name" id="userName">Admin</div>
-                            <div class="user-role" id="userPoints">0 积分</div>
-                        </div>
-                        <i class="fas fa-sign-out-alt" onclick="logout()" style="cursor:pointer;opacity:0.7;"></i>
-                    </div>
+            </div>
+            <nav class="nav-menu">
+                <div class="nav-item active" onclick="showView('dashboard')">
+                    <i class="fas fa-th-large"></i>
+                    <span>仪表盘</span>
                 </div>
-            </aside>
+                <div class="nav-item" onclick="showView('keys')">
+                    <i class="fas fa-key"></i>
+                    <span>API 密钥</span>
+                </div>
+                <div class="nav-item" onclick="showView('usage')">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>使用记录</span>
+                </div>
+                <div class="nav-item" onclick="showView('subscription')">
+                    <i class="fas fa-credit-card"></i>
+                    <span>我的订阅</span>
+                </div>
+                <div class="nav-item" onclick="showView('redeem')">
+                    <i class="fas fa-gift"></i>
+                    <span>兑换</span>
+                </div>
+                <div class="nav-item" onclick="showView('profile')">
+                    <i class="fas fa-user"></i>
+                    <span>个人资料</span>
+                </div>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="theme-toggle" onclick="toggleTheme()">
+                    <i class="fas fa-sun"></i>
+                    <span>浅色模式</span>
+                </div>
+                <div class="theme-toggle" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>收起</span>
+                </div>
+            </div>
+        </aside>
 
-            <main class="main-content">
+        <!-- 主内容 -->
+        <main class="main-content">
+            <!-- 顶部标题栏 -->
+            <header class="top-header">
+                <div class="page-title">
+                    <h1 id="pageTitle">仪表盘</h1>
+                    <p id="pageSubtitle">欢迎回来！这是您账户的概览。</p>
+                </div>
+                <div class="header-actions">
+                    <button class="header-btn">
+                        <i class="fas fa-bell"></i>
+                    </button>
+                    <div class="balance-badge">
+                        <i class="fas fa-wallet"></i>
+                        <span id="headerBalance">$0.00</span>
+                    </div>
+                    <div class="header-btn">
+                        <i class="fas fa-globe"></i>
+                        <span style="margin-left: 4px; font-size: 12px;">ZH</span>
+                    </div>
+                    <div class="user-menu" onclick="showView('profile')">
+                        <div class="user-avatar" id="headerAvatar">A</div>
+                        <div class="user-info">
+                            <span class="user-name" id="headerUserName">Admin</span>
+                            <span class="user-role">User</span>
+                        </div>
+                        <i class="fas fa-chevron-down" style="font-size: 10px; color: var(--text-muted);"></i>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 内容区 -->
+            <div class="content-area">
                 <!-- 仪表盘 -->
-                <div id="dashboardView">
-                    <div class="page-header">
-                        <div class="page-title">
-                            <h1>仪表盘</h1>
-                            <p>实时监控平台运行状态</p>
-                        </div>
-                        <div class="points-display" id="myPoints">
-                            <i class="fas fa-coins"></i>
-                            <span>0 积分</span>
-                        </div>
-                    </div>
-
+                <div id="dashboardView" class="view active">
+                    <!-- 统计卡片 -->
                     <div class="stats-grid">
                         <div class="stat-card">
-                            <div class="stat-icon purple"><i class="fas fa-users"></i></div>
-                            <div class="stat-info">
-                                <h3 id="statUsers">-</h3>
-                                <p>总用户数</p>
+                            <div class="stat-header">
+                                <span class="stat-label">余额<br><span style="font-size: 11px; color: var(--text-muted);">可用</span></span>
+                                <div class="stat-icon green"><i class="fas fa-wallet"></i></div>
                             </div>
+                            <div class="stat-value green" id="statBalance">$0.00</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-icon green"><i class="fas fa-key"></i></div>
-                            <div class="stat-info">
-                                <h3 id="statKeys">-</h3>
-                                <p>上游 Keys</p>
+                            <div class="stat-header">
+                                <span class="stat-label">API 密钥</span>
+                                <div class="stat-icon blue"><i class="fas fa-key"></i></div>
                             </div>
+                            <div class="stat-value" id="statKeys">0</div>
+                            <div class="stat-subtitle" id="statKeysSubtitle">0 启用</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-icon orange"><i class="fas fa-bolt"></i></div>
-                            <div class="stat-info">
-                                <h3 id="statTodayReq">-</h3>
-                                <p>今日请求</p>
+                            <div class="stat-header">
+                                <span class="stat-label">今日请求</span>
+                                <div class="stat-icon green"><i class="fas fa-chart-line"></i></div>
                             </div>
+                            <div class="stat-value" id="statRequests">0</div>
+                            <div class="stat-subtitle" id="statRequestsSubtitle">总计: 0</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-icon blue"><i class="fas fa-coins"></i></div>
-                            <div class="stat-info">
-                                <h3 id="statTodayPoints">-</h3>
-                                <p>今日消耗积分</p>
+                            <div class="stat-header">
+                                <span class="stat-label">今日消费</span>
+                                <div class="stat-icon purple"><i class="fas fa-dollar-sign"></i></div>
                             </div>
+                            <div class="stat-value" id="statTodayCost">$0.00</div>
+                            <div class="stat-subtitle" id="statTodayCostSubtitle">总计: $0.00</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <span class="stat-label">今日 Token</span>
+                                <div class="stat-icon yellow"><i class="fas fa-cube"></i></div>
+                            </div>
+                            <div class="stat-value" id="statTodayTokens">0</div>
+                            <div class="stat-subtitle" id="statTodayTokensSubtitle">输入: 0 / 输出: 0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <span class="stat-label">累计 Token</span>
+                                <div class="stat-icon cyan"><i class="fas fa-database"></i></div>
+                            </div>
+                            <div class="stat-value" id="statTotalTokens">0</div>
+                            <div class="stat-subtitle" id="statTotalTokensSubtitle">输入: 0 / 输出: 0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <span class="stat-label">性能指标</span>
+                                <div class="stat-icon teal"><i class="fas fa-tachometer-alt"></i></div>
+                            </div>
+                            <div class="stat-value" id="statRpm">0</div>
+                            <div class="stat-subtitle">0 TPM</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <span class="stat-label">平均响应</span>
+                                <div class="stat-icon red"><i class="fas fa-clock"></i></div>
+                            </div>
+                            <div class="stat-value" id="statAvgResponse">0s</div>
+                            <div class="stat-subtitle">平均时间</div>
                         </div>
                     </div>
 
-                    <!-- 快速开始 -->
+                    <!-- 图表区域 -->
                     <div class="card">
                         <div class="card-header">
-                            <span class="card-title"><i class="fas fa-rocket" style="margin-right:8px;color:var(--primary);"></i>快速开始</span>
+                            <div style="display: flex; gap: 16px; align-items: center;">
+                                <span class="card-title">时间范围:</span>
+                                <select class="filter-select" id="dashboardTimeRange" onchange="loadDashboard()">
+                                    <option value="7">近 7 天</option>
+                                    <option value="30">近 30 天</option>
+                                    <option value="90">近 90 天</option>
+                                </select>
+                            </div>
+                            <div style="display: flex; gap: 16px; align-items: center;">
+                                <span class="card-title">粒度:</span>
+                                <select class="filter-select">
+                                    <option>按天</option>
+                                    <option>按小时</option>
+                                </select>
+                            </div>
                         </div>
                         <div class="card-body">
-                            <p style="color:var(--gray);margin-bottom:16px;">使用以下代码调用 API：</p>
-                            <div class="code-block">
-<span class="keyword">from</span> openai <span class="keyword">import</span> OpenAI
-
-client = OpenAI(
-    api_key=<span class="string">"<span id="quickStartKey">your-api-key</span>"</span>,
-    base_url=<span class="string">"<span id="baseUrl">http://localhost:8000/v1</span>"</span>,
-)
-
-response = client.chat.completions.create(
-    model=<span class="string">"openai/gpt-3.5-turbo"</span>,  <span class="comment"># 格式: provider/model</span>
-    messages=[{<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"Hello!"</span>}]
-)
-<span class="keyword">print</span>(response.choices[0].message.content)
+                            <div class="chart-grid">
+                                <div>
+                                    <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 16px;">模型分布</h4>
+                                    <div class="chart-container">
+                                        <canvas id="modelChart"></canvas>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 16px;">Token 使用趋势</h4>
+                                    <div class="chart-container">
+                                        <canvas id="trendChart"></canvas>
+                                    </div>
+                                </div>
                             </div>
-                            <p style="color:var(--gray);font-size:13px;margin-top:12px;">
-                                <i class="fas fa-info-circle"></i> 
-                                支持格式: <code>openai/gpt-4</code>, <code>deepseek/deepseek-chat</code>, <code>anthropic/claude-3-opus</code> 等
-                            </p>
                         </div>
                     </div>
 
+                    <!-- 最近使用和快捷操作 -->
+                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
+                        <div class="card">
+                            <div class="card-header">
+                                <span class="card-title">最近使用</span>
+                                <span class="badge badge-info">近 7 天</span>
+                            </div>
+                            <div class="card-body no-padding">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>模型</th>
+                                            <th>时间</th>
+                                            <th>Token</th>
+                                            <th>费用</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="recentUsageTable">
+                                        <tr><td colspan="4" style="text-align:center;padding:40px;color:var(--text-muted);">暂无数据</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <span class="card-title">快捷操作</span>
+                            </div>
+                            <div class="card-body">
+                                <div class="quick-actions" style="grid-template-columns: 1fr;">
+                                    <div class="quick-action-card" onclick="showView('keys')">
+                                        <div class="quick-action-icon">
+                                            <i class="fas fa-plus"></i>
+                                        </div>
+                                        <div class="quick-action-content">
+                                            <h4>创建 API 密钥</h4>
+                                            <p>生成新的 API 密钥</p>
+                                        </div>
+                                        <i class="fas fa-chevron-right" style="margin-left: auto; color: var(--text-muted);"></i>
+                                    </div>
+                                    <div class="quick-action-card" onclick="showView('usage')">
+                                        <div class="quick-action-icon" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-green);">
+                                            <i class="fas fa-chart-bar"></i>
+                                        </div>
+                                        <div class="quick-action-content">
+                                            <h4>查看使用记录</h4>
+                                            <p>查看详细的使用日志</p>
+                                        </div>
+                                        <i class="fas fa-chevron-right" style="margin-left: auto; color: var(--text-muted);"></i>
+                                    </div>
+                                    <div class="quick-action-card" onclick="showView('redeem')">
+                                        <div class="quick-action-icon" style="background: rgba(245, 158, 11, 0.15); color: var(--accent-yellow);">
+                                            <i class="fas fa-gift"></i>
+                                        </div>
+                                        <div class="quick-action-content">
+                                            <h4>兑换码</h4>
+                                            <p>使用兑换码充值</p>
+                                        </div>
+                                        <i class="fas fa-chevron-right" style="margin-left: auto; color: var(--text-muted);"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- API 密钥 -->
+                <div id="keysView" class="view">
+                    <div class="card">
+                        <div class="card-header" style="flex-wrap: wrap; gap: 12px;">
+                            <div class="filter-bar" style="flex: 1; margin-bottom: 0;">
+                                <input type="text" class="filter-input" placeholder="搜索名称或 Key..." id="keysSearch">
+                                <select class="filter-select">
+                                    <option>全部分组</option>
+                                    <option>默认</option>
+                                </select>
+                                <select class="filter-select">
+                                    <option>全部状态</option>
+                                    <option>启用</option>
+                                    <option>禁用</option>
+                                </select>
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="header-btn" onclick="loadKeys()">
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
+                                <button class="btn btn-success btn-sm" onclick="showCreateKeyModal()">
+                                    <i class="fas fa-plus"></i> 创建密钥
+                                </button>
+                            </div>
+                        </div>
+                        <div style="padding: 12px 20px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); font-size: 13px; color: var(--text-secondary);">
+                            <span style="color: var(--accent-blue);">API 端点</span>
+                            <span style="margin: 0 8px;">默认</span>
+                            <span id="apiEndpoint" style="color: var(--text-muted);">http://localhost:8082/v1</span>
+                            <button style="margin-left: 8px; background: none; border: none; color: var(--text-muted); cursor: pointer;">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                        <div class="card-body no-padding">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>名称</th>
+                                        <th>API 密钥</th>
+                                        <th>分组</th>
+                                        <th>用量</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="keysTable">
+                                    <tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-muted);">加载中...</td></tr>
+                                </tbody>
+                            </table>
+                            <div class="pagination">
+                                <div class="pagination-info">显示 1 至 6 共 6 条结果 每页: 
+                                    <select class="filter-select" style="width: auto; margin-left: 8px;">
+                                        <option>20</option>
+                                        <option>50</option>
+                                        <option>100</option>
+                                    </select>
+                                </div>
+                                <div class="pagination-controls">
+                                    <button class="page-btn"><i class="fas fa-chevron-left"></i></button>
+                                    <button class="page-btn active">1</button>
+                                    <button class="page-btn"><i class="fas fa-chevron-right"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 使用记录 -->
+                <div id="usageView" class="view">
+                    <!-- 统计卡片 -->
+                    <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <span class="stat-label">总请求数</span>
+                                <div class="stat-icon blue"><i class="fas fa-file-alt"></i></div>
+                            </div>
+                            <div class="stat-value" id="usageTotalRequests">0</div>
+                            <div class="stat-subtitle">所选范围内</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <span class="stat-label">总 Token</span>
+                                <div class="stat-icon yellow"><i class="fas fa-cube"></i></div>
+                            </div>
+                            <div class="stat-value" id="usageTotalTokens">0</div>
+                            <div class="stat-subtitle" id="usageTotalTokensSubtitle">输入: 0 / 输出: 0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <span class="stat-label">总消费</span>
+                                <div class="stat-icon green"><i class="fas fa-dollar-sign"></i></div>
+                            </div>
+                            <div class="stat-value green" id="usageTotalCost">$0.00</div>
+                            <div class="stat-subtitle">实际 / 标准</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <span class="stat-label">平均耗时</span>
+                                <div class="stat-icon red"><i class="fas fa-clock"></i></div>
+                            </div>
+                            <div class="stat-value" id="usageAvgTime">0s</div>
+                            <div class="stat-subtitle">每次请求</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header" style="flex-wrap: wrap; gap: 12px;">
+                            <div class="filter-bar" style="flex: 1; margin-bottom: 0;">
+                                <select class="filter-select" id="usageKeyFilter">
+                                    <option value="">全部密钥</option>
+                                </select>
+                                <select class="filter-select" id="usageTimeFilter" onchange="loadUsage()">
+                                    <option value="7">近 7 天</option>
+                                    <option value="30">近 30 天</option>
+                                    <option value="90">近 90 天</option>
+                                </select>
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn btn-secondary btn-sm" onclick="loadUsage()">
+                                    <i class="fas fa-sync-alt"></i> 刷新
+                                </button>
+                                <button class="btn btn-secondary btn-sm" onclick="resetUsageFilter()">
+                                    <i class="fas fa-undo"></i> 重置
+                                </button>
+                                <button class="btn btn-success btn-sm" onclick="exportUsage()">
+                                    <i class="fas fa-download"></i> 导出 CSV
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body no-padding">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>API 密钥</th>
+                                        <th>模型</th>
+                                        <th>推理强度</th>
+                                        <th>端点</th>
+                                        <th>类型</th>
+                                        <th>TOKEN</th>
+                                        <th>费用</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usageTable">
+                                    <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted);">暂无数据</td></tr>
+                                </tbody>
+                            </table>
+                            <div class="pagination">
+                                <div class="pagination-info">显示 1 至 20 共 <span id="usageTotalCount">0</span> 条结果 每页: 
+                                    <select class="filter-select" style="width: auto; margin-left: 8px;">
+                                        <option>20</option>
+                                        <option>50</option>
+                                        <option>100</option>
+                                    </select>
+                                </div>
+                                <div class="pagination-controls" id="usagePagination">
+                                    <button class="page-btn"><i class="fas fa-chevron-left"></i></button>
+                                    <button class="page-btn active">1</button>
+                                    <button class="page-btn">2</button>
+                                    <button class="page-btn">3</button>
+                                    <span style="color: var(--text-muted); padding: 0 8px;">...</span>
+                                    <button class="page-btn">295</button>
+                                    <button class="page-btn"><i class="fas fa-chevron-right"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 我的订阅 -->
+                <div id="subscriptionView" class="view">
                     <div class="card">
                         <div class="card-header">
-                            <span class="card-title"><i class="fas fa-history" style="margin-right:8px;color:var(--primary);"></i>最近请求</span>
+                            <span class="card-title">我的订阅</span>
                         </div>
-                        <div class="card-body" style="padding:0;">
-                            <table class="data-table">
-                                <thead>
-                                    <tr><th>时间</th><th>用户</th><th>模型</th><th>Tokens</th><th>积分</th><th>状态</th></tr>
-                                </thead>
-                                <tbody id="recentLogs">
-                                    <tr><td colspan="6"><div class="empty-state"><i class="fas fa-inbox"></i><h3>暂无数据</h3></div></td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 用户管理 -->
-                <div id="usersView" class="hidden">
-                    <div class="page-header">
-                        <div class="page-title"><h1>用户管理</h1><p>管理平台用户及积分</p></div>
-                        <button class="btn btn-primary" onclick="showModal('addUserModal')">
-                            <i class="fas fa-plus"></i> 添加用户
-                        </button>
-                    </div>
-                    <div class="card">
-                        <div class="card-body" style="padding:0;">
-                            <table class="data-table">
-                                <thead>
-                                    <tr><th>用户</th><th>API Key</th><th>积分余额</th><th>状态</th><th>操作</th></tr>
-                                </thead>
-                                <tbody id="usersTable"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 上游管理 -->
-                <div id="upstreamView" class="hidden">
-                    <div class="page-header">
-                        <div class="page-title"><h1>上游管理</h1><p>管理 API Keys 及负载均衡</p></div>
-                        <button class="btn btn-primary" onclick="showModal('addKeyModal')">
-                            <i class="fas fa-plus"></i> 添加 Key
-                        </button>
-                    </div>
-                    <div class="card">
-                        <div class="card-body" style="padding:0;">
-                            <table class="data-table">
-                                <thead>
-                                    <tr><th>提供商</th><th>API Key</th><th>请求数</th><th>状态</th><th>操作</th></tr>
-                                </thead>
-                                <tbody id="upstreamTable"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 使用统计 -->
-                <div id="usageView" class="hidden">
-                    <div class="page-header">
-                        <div class="page-title"><h1>使用统计</h1><p>详细的用量分析和趋势</p></div>
-                    </div>
-                    <div class="card">
-                        <div class="card-header"><span class="card-title">7日使用趋势</span></div>
-                        <div class="card-body">
-                            <div id="usageChart" style="height:300px;display:flex;align-items:center;justify-content:center;color:var(--gray);">图表加载中...</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 接口文档 -->
-                <div id="docsView" class="hidden">
-                    <div class="page-header">
-                        <div class="page-title"><h1>接口文档</h1><p>API 使用指南</p></div>
-                    </div>
-                    <div class="card">
-                        <div class="card-header"><span class="card-title">支持的模型</span></div>
-                        <div class="card-body">
-                            <table class="data-table">
-                                <thead>
-                                    <tr><th>模型</th><th>Provider</th><th>积分/1K tokens</th></tr>
-                                </thead>
-                                <tbody>
-                                    <tr><td><code>openai/gpt-4</code></td><td>OpenAI</td><td>30</td></tr>
-                                    <tr><td><code>openai/gpt-4o</code></td><td>OpenAI</td><td>5</td></tr>
-                                    <tr><td><code>openai/gpt-3.5-turbo</code></td><td>OpenAI</td><td>1</td></tr>
-                                    <tr><td><code>anthropic/claude-3-opus</code></td><td>Anthropic</td><td>15</td></tr>
-                                    <tr><td><code>anthropic/claude-3-sonnet</code></td><td>Anthropic</td><td>3</td></tr>
-                                    <tr><td><code>deepseek/deepseek-chat</code></td><td>DeepSeek</td><td>1</td></tr>
-                                    <tr><td><code>deepseek/deepseek-coder</code></td><td>DeepSeek</td><td>1</td></tr>
-                                    <tr><td><code>gemini/gemini-pro</code></td><td>Google</td><td>1</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <div class="card-header"><span class="card-title">我的 API Key</span></div>
-                        <div class="card-body">
-                            <p style="color:var(--gray);margin-bottom:12px;">使用此 API Key 调用转发接口</p>
-                            <div class="api-key-box">
-                                <span class="api-key-text" id="myApiKey">sk-********************************</span>
-                                <button class="api-key-copy" onclick="copyApiKey()"><i class="fas fa-copy"></i></button>
-                            </div>
-                            <button class="btn btn-warning btn-sm" onclick="regenerateKey()">
-                                <i class="fas fa-sync-alt"></i> 重新生成
+                        <div class="card-body" style="text-align: center; padding: 80px;">
+                            <i class="fas fa-credit-card" style="font-size: 64px; color: var(--text-muted); margin-bottom: 24px;"></i>
+                            <h3 style="font-size: 20px; margin-bottom: 12px;">暂无订阅</h3>
+                            <p style="color: var(--text-muted); margin-bottom: 24px;">您当前没有激活的订阅计划</p>
+                            <button class="btn btn-primary" style="width: auto;">
+                                <i class="fas fa-plus"></i> 查看可用计划
                             </button>
                         </div>
                     </div>
                 </div>
-            </main>
-        </div>
-    </div>
 
-    <!-- 添加用户模态框 -->
-    <div id="addUserModal" class="modal-overlay" onclick="closeModalOnOverlay(event, 'addUserModal')">
-        <div class="modal">
-            <div class="modal-header">
-                <h3 class="modal-title">添加新用户</h3>
-                <div class="modal-close" onclick="hideModal('addUserModal')"><i class="fas fa-times"></i></div>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label>用户名</label>
-                    <input type="text" id="newUsername" class="form-control" placeholder="username" style="padding-left:16px;">
-                </div>
-                <div class="form-group">
-                    <label>密码</label>
-                    <input type="password" id="newPassword" class="form-control" placeholder="password" style="padding-left:16px;">
-                </div>
-                <div class="form-group">
-                    <label>邮箱 (可选)</label>
-                    <input type="email" id="newEmail" class="form-control" placeholder="email@example.com" style="padding-left:16px;">
-                </div>
-                <div class="form-group">
-                    <label>初始积分</label>
-                    <input type="number" id="newPoints" class="form-control" value="100" style="padding-left:16px;">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="hideModal('addUserModal')">取消</button>
-                <button class="btn btn-primary" onclick="addUser()">创建</button>
-            </div>
-        </div>
-    </div>
+                <!-- 兑换 -->
+                <div id="redeemView" class="view">
+                    <!-- 余额卡片 -->
+                    <div class="balance-card">
+                        <i class="fas fa-wallet" style="font-size: 48px; margin-bottom: 16px; opacity: 0.8;"></i>
+                        <div class="balance-label">当前余额</div>
+                        <div class="balance-value" id="redeemBalance">$0.00</div>
+                        <div class="balance-subtitle">并发数: 2 请求</div>
+                    </div>
 
-    <!-- 添加 Key 模态框 -->
-    <div id="addKeyModal" class="modal-overlay" onclick="closeModalOnOverlay(event, 'addKeyModal')">
-        <div class="modal">
-            <div class="modal-header">
-                <h3 class="modal-title">添加上游 API Key</h3>
-                <div class="modal-close" onclick="hideModal('addKeyModal')"><i class="fas fa-times"></i></div>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label>提供商</label>
-                    <select id="keyProvider" class="form-control" style="padding-left:16px;">
-                        <option value="openai">OpenAI</option>
-                        <option value="anthropic">Anthropic (Claude)</option>
-                        <option value="deepseek">DeepSeek</option>
-                        <option value="gemini">Google Gemini</option>
-                        <option value="siliconflow">SiliconFlow</option>
-                        <option value="moonshot">Moonshot</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>API Key</label>
-                    <input type="text" id="keyValue" class="form-control" placeholder="sk-..." style="padding-left:16px;">
-                </div>
-                <div class="form-group">
-                    <label>备注 (可选)</label>
-                    <input type="text" id="keyRemark" class="form-control" placeholder="例如：账号1" style="padding-left:16px;">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="hideModal('addKeyModal')">取消</button>
-                <button class="btn btn-primary" onclick="addKey()">添加</button>
-            </div>
-        </div>
-    </div>
+                    <!-- 兑换码输入 -->
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">兑换码</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group" style="margin-bottom: 16px;">
+                                <div class="input-wrapper">
+                                    <i class="fas fa-ticket-alt" style="left: 16px;"></i>
+                                    <input type="text" class="form-control" id="redeemCode" placeholder="请输入兑换码" style="padding-left: 48px;">
+                                </div>
+                                <p style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">兑换码区分大小写</p>
+                            </div>
+                            <button class="btn btn-primary" onclick="redeemCode()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                                <i class="fas fa-check-circle"></i> 兑换
+                            </button>
+                        </div>
+                    </div>
 
-    <!-- 充值模态框 -->
-    <div id="rechargeModal" class="modal-overlay" onclick="closeModalOnOverlay(event, 'rechargeModal')">
-        <div class="modal">
-            <div class="modal-header">
-                <h3 class="modal-title">用户充值</h3>
-                <div class="modal-close" onclick="hideModal('rechargeModal')"><i class="fas fa-times"></i></div>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label>充值积分</label>
-                    <input type="number" id="rechargeAmount" class="form-control" value="1000" style="padding-left:16px;">
+                    <!-- 关于兑换码 -->
+                    <div class="card">
+                        <div class="card-body">
+                            <div style="display: flex; align-items: flex-start; gap: 16px;">
+                                <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(20, 184, 166, 0.15); color: var(--accent-teal); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    <i class="fas fa-info-circle"></i>
+                                </div>
+                                <div>
+                                    <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">关于兑换码</h4>
+                                    <ul style="font-size: 13px; color: var(--text-secondary); line-height: 2; padding-left: 16px;">
+                                        <li>每个兑换码只能使用一次</li>
+                                        <li>兑换码可以增加余额、并发数或试用权限</li>
+                                        <li>如有兑换问题，请联系客服</li>
+                                        <li>余额和并发数即时更新</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 最近活动 -->
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">最近活动</span>
+                            <span class="badge badge-info">近 7 天</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="activity-list" id="activityList">
+                                <div class="activity-item">
+                                    <div class="activity-left">
+                                        <div class="activity-icon">
+                                            <i class="fas fa-dollar-sign"></i>
+                                        </div>
+                                        <div class="activity-info">
+                                            <h4>余额充值（管理员）</h4>
+                                            <p>2026/03/19 13:36:36</p>
+                                        </div>
+                                    </div>
+                                    <div class="activity-amount">+$900.00</div>
+                                </div>
+                                <div class="activity-item">
+                                    <div class="activity-left">
+                                        <div class="activity-icon">
+                                            <i class="fas fa-dollar-sign"></i>
+                                        </div>
+                                        <div class="activity-info">
+                                            <h4>余额充值（管理员）</h4>
+                                            <p>2026/03/18 22:01:24</p>
+                                        </div>
+                                    </div>
+                                    <div class="activity-amount">+$100.00</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>备注</label>
-                    <input type="text" id="rechargeRemark" class="form-control" placeholder="充值说明" style="padding-left:16px;">
+
+                <!-- 个人资料 -->
+                <div id="profileView" class="view">
+                    <!-- 统计卡片 -->
+                    <div class="profile-header">
+                        <div class="profile-card">
+                            <div class="profile-card-icon" style="color: var(--accent-green);">
+                                <i class="fas fa-wallet"></i>
+                            </div>
+                            <div class="profile-card-label">账户余额</div>
+                            <div class="profile-card-value" id="profileBalance" style="color: var(--accent-green);">$0.00</div>
+                        </div>
+                        <div class="profile-card">
+                            <div class="profile-card-icon" style="color: var(--accent-yellow);">
+                                <i class="fas fa-bolt"></i>
+                            </div>
+                            <div class="profile-card-label">并发限制</div>
+                            <div class="profile-card-value" id="profileRateLimit">2</div>
+                        </div>
+                        <div class="profile-card">
+                            <div class="profile-card-icon" style="color: var(--accent-blue);">
+                                <i class="fas fa-calendar"></i>
+                            </div>
+                            <div class="profile-card-label">注册时间</div>
+                            <div class="profile-card-value" id="profileCreatedAt" style="font-size: 18px;">2026年3月</div>
+                        </div>
+                    </div>
+
+                    <!-- 用户信息卡片 -->
+                    <div class="profile-info-card">
+                        <div class="profile-avatar-large" id="profileAvatarLarge">A</div>
+                        <div class="profile-info-content">
+                            <h3 id="profileEmail">user@example.com</h3>
+                            <div style="display: flex; gap: 12px; margin-bottom: 8px;">
+                                <span class="badge badge-info">用户</span>
+                                <span class="badge badge-success">active</span>
+                            </div>
+                            <div class="profile-info-meta">
+                                <span><i class="fas fa-envelope" style="margin-right: 6px;"></i><span id="profileEmail2">user@example.com</span></span>
+                                <span><i class="fas fa-user" style="margin-right: 6px;"></i><span id="profileUserName">username</span></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 编辑资料 -->
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">编辑个人资料</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label>用户名</label>
+                                <input type="text" class="form-control" id="editUsername" value="username" style="padding-left: 16px;">
+                            </div>
+                            <div style="text-align: right;">
+                                <button class="btn btn-success btn-sm" onclick="updateProfile()">
+                                    <i class="fas fa-save"></i> 更新资料
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 修改密码 -->
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">修改密码</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label>当前密码</label>
+                                <input type="password" class="form-control" id="currentPassword" placeholder="请输入当前密码" style="padding-left: 16px;">
+                            </div>
+                            <div class="form-group">
+                                <label>新密码</label>
+                                <input type="password" class="form-control" id="newPassword" placeholder="请输入新密码" style="padding-left: 16px;">
+                                <p style="font-size: 12px; color: var(--text-muted); margin-top: 6px;">密码至少需要 8 个字符</p>
+                            </div>
+                            <div class="form-group">
+                                <label>确认新密码</label>
+                                <input type="password" class="form-control" id="confirmPassword" placeholder="请再次输入新密码" style="padding-left: 16px;">
+                            </div>
+                            <div style="text-align: right;">
+                                <button class="btn btn-success btn-sm" onclick="changePassword()">
+                                    <i class="fas fa-lock"></i> 修改密码
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="hideModal('rechargeModal')">取消</button>
-                <button class="btn btn-success" onclick="rechargeUser()">确认充值</button>
-            </div>
-        </div>
+        </main>
     </div>
 
     <script>
         const API_BASE = window.location.origin;
         let token = localStorage.getItem('token');
         let currentUser = null;
-        let currentRechargeUserId = null;
+        let modelChart = null;
+        let trendChart = null;
 
-        if (token) showApp();
+        // 页面标题映射
+        const pageTitles = {
+            dashboard: { title: '仪表盘', subtitle: '欢迎回来！这是您账户的概览。' },
+            keys: { title: 'API 密钥', subtitle: '管理您的 API 密钥和访问令牌' },
+            usage: { title: '使用记录', subtitle: '查看和分析您的 API 使用历史' },
+            subscription: { title: '我的订阅', subtitle: '管理您的订阅计划' },
+            redeem: { title: '兑换码', subtitle: '输入兑换码以充值余额或增加并发数' },
+            profile: { title: '个人设置', subtitle: '管理您的账户信息和设置' }
+        };
+
+        // 初始化
+        if (token) {
+            showApp();
+        }
 
         function showApp() {
             document.getElementById('loginPage').classList.add('hidden');
             document.getElementById('appPage').classList.remove('hidden');
-            document.getElementById('baseUrl').textContent = API_BASE + '/v1';
+            loadUserInfo();
             loadDashboard();
         }
 
+        // 登录
         async function login() {
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
+            
             try {
                 const formData = new URLSearchParams();
                 formData.append('username', username);
                 formData.append('password', password);
+                
                 const res = await fetch(`${API_BASE}/api/auth/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: formData
                 });
+                
                 const data = await res.json();
+                
                 if (res.ok) {
                     token = data.access_token;
                     currentUser = data.user;
                     localStorage.setItem('token', token);
-                    document.getElementById('userName').textContent = currentUser.username;
-                    document.getElementById('userAvatar').textContent = currentUser.username[0].toUpperCase();
-                    document.getElementById('userPoints').textContent = Math.floor(currentUser.points_balance || 0) + ' 积分';
-                    document.getElementById('myApiKey').textContent = currentUser.api_key;
-                    document.getElementById('quickStartKey').textContent = currentUser.api_key;
                     showApp();
                 } else {
                     document.getElementById('loginError').textContent = data.detail || '登录失败';
@@ -971,179 +1573,484 @@ response = client.chat.completions.create(
             }
         }
 
+        // 登出
         function logout() {
             localStorage.removeItem('token');
+            token = null;
+            currentUser = null;
             location.reload();
         }
 
-        function navTo(view) {
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            event.currentTarget.classList.add('active');
-            ['dashboard', 'users', 'upstream', 'usage', 'docs'].forEach(v => {
-                document.getElementById(v + 'View').classList.add('hidden');
+        // 切换视图
+        function showView(viewName) {
+            // 更新导航状态
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.remove('active');
+                if (el.getAttribute('onclick') && el.getAttribute('onclick').includes(viewName)) {
+                    el.classList.add('active');
+                }
             });
-            document.getElementById(view + 'View').classList.remove('hidden');
-            if (view === 'dashboard') loadDashboard();
-            if (view === 'users') loadUsers();
-            if (view === 'upstream') loadUpstream();
-            if (view === 'usage') loadUsage();
+            
+            // 切换视图
+            document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+            document.getElementById(viewName + 'View').classList.add('active');
+            
+            // 更新页面标题
+            const titles = pageTitles[viewName];
+            if (titles) {
+                document.getElementById('pageTitle').textContent = titles.title;
+                document.getElementById('pageSubtitle').textContent = titles.subtitle;
+            }
+            
+            // 加载数据
+            if (viewName === 'dashboard') loadDashboard();
+            if (viewName === 'keys') loadKeys();
+            if (viewName === 'usage') loadUsage();
+            if (viewName === 'redeem') loadRedeem();
+            if (viewName === 'profile') loadProfile();
         }
 
+        // API 请求封装
         async function apiGet(path) {
-            const res = await fetch(`${API_BASE}${path}`, { headers: { 'Authorization': `Bearer ${token}` } });
-            if (res.status === 401) { logout(); return null; }
+            const res = await fetch(`${API_BASE}${path}`, { 
+                headers: { 'Authorization': `Bearer ${token}` } 
+            });
+            if (res.status === 401) { 
+                logout();
+                return null; 
+            }
             return res.json();
         }
 
         async function apiPost(path, body) {
             const res = await fetch(`${API_BASE}${path}`, {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify(body)
             });
-            return res;
+            if (res.status === 401) { 
+                logout();
+                return null; 
+            }
+            return res.json();
         }
 
-        async function loadDashboard() {
-            const stats = await apiGet('/api/usage/dashboard');
-            if (!stats) return;
-            document.getElementById('statUsers').textContent = stats.total_users;
-            document.getElementById('statKeys').textContent = stats.total_upstream_keys;
-            document.getElementById('statTodayReq').textContent = stats.today_requests.toLocaleString();
-            document.getElementById('statTodayPoints').textContent = stats.today_points || 0;
-            document.getElementById('myPoints').innerHTML = `<i class="fas fa-coins"></i><span>${Math.floor(currentUser?.points_balance || 0)} 积分</span>`;
+        // 加载用户信息
+        async function loadUserInfo() {
+            const user = await apiGet('/api/users/me');
+            if (!user) return;
             
-            const logsHtml = stats.recent_logs.map(log => `
-                <tr>
-                    <td>${new Date(log.created_at).toLocaleString()}</td>
-                    <td>用户${log.user_id}</td>
-                    <td><span class="badge badge-warning"><span class="badge-dot"></span>${log.model}</span></td>
-                    <td>${log.total_tokens?.toLocaleString() || 0}</td>
-                    <td>${log.points_consumed || 0}</td>
-                    <td>${log.response_status === 200 ? '<span class="badge badge-success"><span class="badge-dot"></span>成功</span>' : '<span class="badge badge-danger"><span class="badge-dot"></span>失败</span>'}</td>
-                </tr>
-            `).join('');
-            document.getElementById('recentLogs').innerHTML = logsHtml || '<tr><td colspan="6"><div class="empty-state"><i class="fas fa-inbox"></i><h3>暂无数据</h3></div></td></tr>';
+            currentUser = user;
+            
+            // 更新头部信息
+            document.getElementById('headerBalance').textContent = `$${(user.points_balance || 0).toFixed(2)}`;
+            document.getElementById('headerUserName').textContent = user.username;
+            document.getElementById('headerAvatar').textContent = user.username[0].toUpperCase();
+            document.getElementById('apiEndpoint').textContent = `${API_BASE}/v1`;
         }
 
-        async function loadUsers() {
-            const users = await apiGet('/api/users/');
-            if (!users) return;
-            const html = users.map(u => `
+        // 加载仪表盘数据
+        async function loadDashboard() {
+            const days = document.getElementById('dashboardTimeRange')?.value || 7;
+            const data = await apiGet(`/api/usage/dashboard?days=${days}`);
+            if (!data) return;
+
+            // 更新统计卡片
+            document.getElementById('statBalance').textContent = `$${(data.balance || 0).toFixed(2)}`;
+            document.getElementById('statKeys').textContent = data.api_keys_count || 0;
+            document.getElementById('statKeysSubtitle').textContent = `${data.active_keys_count || 0} 启用`;
+            document.getElementById('statRequests').textContent = (data.today_requests || 0).toLocaleString();
+            document.getElementById('statRequestsSubtitle').textContent = `总计: ${(data.total_requests || 0).toLocaleString()}`;
+            document.getElementById('statTodayCost').textContent = `$${(data.today_cost || 0).toFixed(4)}`;
+            document.getElementById('statTodayCostSubtitle').textContent = `总计: $${(data.total_cost || 0).toFixed(4)}`;
+            document.getElementById('statTodayTokens').textContent = formatTokens(data.today_tokens || 0);
+            document.getElementById('statTodayTokensSubtitle').textContent = `输入: ${formatTokens(data.today_input_tokens || 0)} / 输出: ${formatTokens(data.today_output_tokens || 0)}`;
+            document.getElementById('statTotalTokens').textContent = formatTokens(data.total_tokens || 0);
+            document.getElementById('statTotalTokensSubtitle').textContent = `输入: ${formatTokens(data.total_input_tokens || 0)} / 输出: ${formatTokens(data.total_output_tokens || 0)}`;
+            document.getElementById('statRpm').textContent = data.rpm || 0;
+            document.getElementById('statAvgResponse').textContent = `${data.avg_response_time || 0}s`;
+
+            // 初始化图表
+            initCharts(data);
+
+            // 加载最近使用
+            loadRecentUsage(data.recent_usage || []);
+        }
+
+        // 格式化 token 数量
+        function formatTokens(num) {
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+            return num.toString();
+        }
+
+        // 初始化图表
+        function initCharts(data) {
+            // 模型分布饼图
+            const modelCtx = document.getElementById('modelChart');
+            if (modelCtx) {
+                if (modelChart) modelChart.destroy();
+                
+                const modelData = data.model_distribution || [
+                    { name: 'gpt-4', value: 60, tokens: '3,987,885.0M' },
+                    { name: 'claude-opus', value: 20, tokens: '92.2M' },
+                    { name: 'gpt-3.5', value: 15, tokens: '9.1M' },
+                    { name: '其他', value: 5, tokens: '7.3M' }
+                ];
+                
+                modelChart = new Chart(modelCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: modelData.map(m => m.name),
+                        datasets: [{
+                            data: modelData.map(m => m.value),
+                            backgroundColor: [
+                                '#3b82f6',
+                                '#10b981',
+                                '#f59e0b',
+                                '#8b5cf6',
+                                '#ef4444'
+                            ],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                                labels: {
+                                    color: '#94a3b8',
+                                    padding: 16,
+                                    usePointStyle: true
+                                }
+                            }
+                        },
+                        cutout: '60%'
+                    }
+                });
+            }
+
+            // Token 趋势折线图
+            const trendCtx = document.getElementById('trendChart');
+            if (trendCtx) {
+                if (trendChart) trendChart.destroy();
+                
+                const trendData = data.token_trend || {
+                    labels: ['2026-03-23', '2026-03-24', '2026-03-25', '2026-03-26', '2026-03-27', '2026-03-28', '2026-03-29'],
+                    input: [50, 45, 40, 70, 200, 45, 35],
+                    output: [10, 8, 5, 15, 40, 10, 8],
+                    cacheCreation: [5, 4, 3, 7, 20, 5, 4],
+                    cacheRead: [2, 2, 1, 3, 10, 2, 2]
+                };
+                
+                trendChart = new Chart(trendCtx, {
+                    type: 'line',
+                    data: {
+                        labels: trendData.labels,
+                        datasets: [
+                            {
+                                label: 'Input',
+                                data: trendData.input,
+                                borderColor: '#3b82f6',
+                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                fill: true,
+                                tension: 0.4
+                            },
+                            {
+                                label: 'Output',
+                                data: trendData.output,
+                                borderColor: '#10b981',
+                                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                                fill: true,
+                                tension: 0.4
+                            },
+                            {
+                                label: 'Cache Creation',
+                                data: trendData.cacheCreation,
+                                borderColor: '#f59e0b',
+                                backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                                fill: true,
+                                tension: 0.4
+                            },
+                            {
+                                label: 'Cache Read',
+                                data: trendData.cacheRead,
+                                borderColor: '#06b6d4',
+                                backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                                fill: true,
+                                tension: 0.4
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: '#94a3b8',
+                                    usePointStyle: true
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: {
+                                    color: 'rgba(45, 55, 72, 0.5)'
+                                },
+                                ticks: {
+                                    color: '#64748b'
+                                }
+                            },
+                            y: {
+                                grid: {
+                                    color: 'rgba(45, 55, 72, 0.5)'
+                                },
+                                ticks: {
+                                    color: '#64748b'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // 加载最近使用
+        function loadRecentUsage(usage) {
+            const tbody = document.getElementById('recentUsageTable');
+            if (!usage || usage.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:40px;color:var(--text-muted);">暂无数据</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = usage.map(u => `
                 <tr>
                     <td>
-                        <div style="display:flex;align-items:center;gap:12px;">
-                            <div class="user-avatar" style="background:var(--primary);color:white;width:32px;height:32px;font-size:12px;">${u.username[0].toUpperCase()}</div>
-                            <div><div style="font-weight:500;">${u.username}</div><div style="font-size:12px;color:var(--gray);">${u.email || '无邮箱'}</div></div>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <i class="fas fa-robot" style="color:var(--accent-blue);"></i>
+                            <span>${u.model || 'Unknown'}</span>
                         </div>
                     </td>
-                    <td><code style="background:var(--bg);padding:4px 8px;border-radius:4px;font-size:12px;">${u.api_key.substring(0, 16)}...</code></td>
-                    <td><span style="font-weight:600;color:var(--primary);">${Math.floor(u.points_balance || 0)}</span></td>
-                    <td>${u.is_active ? '<span class="badge badge-success"><span class="badge-dot"></span>正常</span>' : '<span class="badge badge-danger"><span class="badge-dot"></span>禁用</span>'}</td>
-                    <td><button class="btn btn-success btn-sm" onclick="showRechargeModal(${u.id})"><i class="fas fa-plus-circle"></i> 充值</button></td>
+                    <td style="color:var(--text-muted);font-size:13px;">${formatDate(u.created_at)}</td>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:4px;font-size:13px;">
+                            <i class="fas fa-arrow-down" style="color:var(--accent-blue);"></i>
+                            <span>${formatTokens(u.input_tokens || 0)}</span>
+                            <i class="fas fa-arrow-up" style="color:var(--accent-green);margin-left:8px;"></i>
+                            <span>${formatTokens(u.output_tokens || 0)}</span>
+                        </div>
+                    </td>
+                    <td style="color:var(--accent-green);font-weight:500;">$${(u.cost || 0).toFixed(4)}</td>
                 </tr>
             `).join('');
-            document.getElementById('usersTable').innerHTML = html;
         }
 
-        async function loadUpstream() {
-            const keys = await apiGet('/api/upstream/keys');
-            if (!keys) return;
-            const html = keys.map(k => `
-                <tr>
-                    <td><span class="badge badge-warning"><i class="fas fa-server" style="margin-right:4px;"></i>Provider ${k.provider_id}</span></td>
-                    <td><code style="background:var(--bg);padding:4px 8px;border-radius:4px;font-size:12px;">${k.encrypted_key.substring(0, 20)}...</code></td>
-                    <td>${k.total_requests.toLocaleString()}</td>
-                    <td>${k.is_active ? '<span class="badge badge-success"><span class="badge-dot"></span>正常</span>' : '<span class="badge badge-danger"><span class="badge-dot"></span>禁用</span>'}</td>
-                    <td><button class="btn ${k.is_active ? 'btn-danger' : 'btn-success'} btn-sm" onclick="toggleKey(${k.id})">${k.is_active ? '禁用' : '启用'}</button></td>
-                </tr>
-            `).join('');
-            document.getElementById('upstreamTable').innerHTML = html || '<tr><td colspan="5"><div class="empty-state"><i class="fas fa-server"></i><h3>暂无上游 Key</h3></div></td></tr>';
-        }
-
-        async function loadUsage() {
-            const stats = await apiGet('/api/usage/stats/summary?days=7');
-            if (!stats) return;
-            let html = '<table class="data-table"><thead><tr><th>日期</th><th>请求数</th><th>Tokens</th><th>积分消耗</th></tr></thead><tbody>';
-            html += stats.daily.map(d => `<tr><td>${d.date}</td><td>${d.requests.toLocaleString()}</td><td>${(d.tokens/1000).toFixed(1)}K</td><td>${d.points || 0}</td></tr>`).join('');
-            html += '</tbody></table>';
-            document.getElementById('usageChart').innerHTML = html;
-        }
-
-        function showModal(id) { document.getElementById(id).classList.add('active'); }
-        function hideModal(id) { document.getElementById(id).classList.remove('active'); }
-        function closeModalOnOverlay(event, id) { if (event.target === document.getElementById(id)) hideModal(id); }
-
-        async function addUser() {
-            const body = {
-                username: document.getElementById('newUsername').value,
-                password: document.getElementById('newPassword').value,
-                email: document.getElementById('newEmail').value || null,
-                total_quota: 0  // 使用积分系统
-            };
-            const res = await apiPost('/api/users/', body);
-            if (res.ok) {
-                const user = await res.json();
-                // 充值初始积分
-                await fetch(`${API_BASE}/api/users/${user.id}/add-points?points=${document.getElementById('newPoints').value}&remark=初始充值`, {
-                    method: 'POST', headers: { 'Authorization': `Bearer ${token}` }
-                });
-                hideModal('addUserModal');
-                loadUsers();
-            } else {
-                alert('创建失败');
-            }
-        }
-
-        async function addKey() {
-            // 需要先获取 provider_id
-            const providers = await apiGet('/api/upstream/providers');
-            const providerMap = { 'openai': 1, 'anthropic': 2, 'deepseek': 3, 'gemini': 4, 'siliconflow': 5, 'moonshot': 6 };
-            const providerName = document.getElementById('keyProvider').value;
-            const providerId = providerMap[providerName] || 1;
+        // 加载 API 密钥
+        async function loadKeys() {
+            const data = await apiGet('/api/upstream/keys');
+            const tbody = document.getElementById('keysTable');
             
-            const body = {
-                provider_id: providerId,
-                api_key: document.getElementById('keyValue').value,
-                remark: document.getElementById('keyRemark').value
-            };
-            const res = await apiPost('/api/upstream/keys', body);
-            if (res.ok) { hideModal('addKeyModal'); loadUpstream(); }
-            else alert('添加失败');
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-muted);">暂无密钥</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = data.map(k => `
+                <tr>
+                    <td>
+                        <span style="font-weight:500;">${k.name || '未命名'}</span>
+                    </td>
+                    <td>
+                        <span class="key-tag">${(k.key_preview || '****').substring(0, 20)}...</span>
+                        <button style="margin-left:8px;background:none;border:none;color:var(--text-muted);cursor:pointer;" onclick="copyToClipboard('${k.api_key}')">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </td>
+                    <td>
+                        <span class="badge badge-info">${k.group || '默认'}</span>
+                        <span class="badge badge-success">${k.multiplier || '0.12x'}</span>
+                    </td>
+                    <td>
+                        <div style="font-size:13px;">
+                            <div>今日: $${(k.today_cost || 0).toFixed(2)}</div>
+                            <div style="color:var(--text-muted);">近30天: $${(k.month_cost || 0).toFixed(2)}</div>
+                        </div>
+                    </td>
+                    <td>
+                        <div style="display:flex;gap:8px;">
+                            <button class="header-btn" style="width:32px;height:32px;" title="使用密钥" onclick="copyToClipboard('${k.api_key}')">
+                                <i class="fas fa-copy" style="font-size:12px;"></i>
+                            </button>
+                            <button class="header-btn" style="width:32px;height:32px;" title="禁用" onclick="toggleKey(${k.id})">
+                                <i class="fas fa-ban" style="font-size:12px;"></i>
+                            </button>
+                            <button class="header-btn" style="width:32px;height:32px;" title="编辑" onclick="editKey(${k.id})">
+                                <i class="fas fa-edit" style="font-size:12px;"></i>
+                            </button>
+                            <button class="header-btn" style="width:32px;height:32px;" title="删除" onclick="deleteKey(${k.id})">
+                                <i class="fas fa-trash" style="font-size:12px;color:var(--accent-red);"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
         }
 
-        function showRechargeModal(userId) { currentRechargeUserId = userId; showModal('rechargeModal'); }
-
-        async function rechargeUser() {
-            const amount = parseInt(document.getElementById('rechargeAmount').value);
-            const remark = document.getElementById('rechargeRemark').value;
-            const res = await fetch(`${API_BASE}/api/users/${currentRechargeUserId}/add-points?points=${amount}&remark=${encodeURIComponent(remark)}`, {
-                method: 'POST', headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (res.ok) { hideModal('rechargeModal'); loadUsers(); }
+        // 加载使用记录
+        async function loadUsage() {
+            const days = document.getElementById('usageTimeFilter')?.value || 7;
+            const data = await apiGet(`/api/usage/stats?days=${days}`);
+            
+            if (data) {
+                document.getElementById('usageTotalRequests').textContent = (data.total_requests || 0).toLocaleString();
+                document.getElementById('usageTotalTokens').textContent = formatTokens(data.total_tokens || 0);
+                document.getElementById('usageTotalTokensSubtitle').textContent = `输入: ${formatTokens(data.input_tokens || 0)} / 输出: ${formatTokens(data.output_tokens || 0)}`;
+                document.getElementById('usageTotalCost').textContent = `$${(data.total_cost || 0).toFixed(4)}`;
+                document.getElementById('usageAvgTime').textContent = `${data.avg_response_time || 0}s`;
+                document.getElementById('usageTotalCount').textContent = data.total_count || 0;
+            }
+            
+            const logs = await apiGet(`/api/usage/logs?days=${days}&limit=20`);
+            const tbody = document.getElementById('usageTable');
+            
+            if (!logs || logs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted);">暂无数据</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = logs.map(log => `
+                <tr>
+                    <td><span class="key-tag">${(log.api_key || '****').substring(0, 16)}...</span></td>
+                    <td>${log.model || 'Unknown'}</td>
+                    <td><span class="badge badge-info">${log.intensity || 'High'}</span></td>
+                    <td style="color:var(--text-muted);font-size:13px;">${log.endpoint || '/v1/chat'}</td>
+                    <td><span class="badge badge-success">流式</span></td>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:4px;font-size:13px;">
+                            <i class="fas fa-arrow-down" style="color:var(--accent-blue);"></i>
+                            <span>${(log.input_tokens || 0).toLocaleString()}</span>
+                            <i class="fas fa-arrow-up" style="color:var(--accent-green);margin-left:8px;"></i>
+                            <span>${(log.output_tokens || 0).toLocaleString()}</span>
+                            <span style="color:var(--text-muted);margin-left:8px;">${formatTokens(log.total_tokens || 0)}</span>
+                        </div>
+                    </td>
+                    <td style="color:var(--accent-green);font-weight:500;">$${(log.cost || 0).toFixed(6)}</td>
+                </tr>
+            `).join('');
         }
 
-        async function toggleKey(id) {
-            await fetch(`${API_BASE}/api/upstream/keys/${id}/toggle`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
-            loadUpstream();
-        }
-
-        function copyApiKey() {
-            navigator.clipboard.writeText(document.getElementById('myApiKey').textContent).then(() => alert('已复制'));
-        }
-
-        async function regenerateKey() {
-            if (!confirm('确定要重新生成 API Key 吗？')) return;
-            const res = await fetch(`${API_BASE}/api/users/me/regenerate-api-key`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
-            if (res.ok) {
-                const data = await res.json();
-                document.getElementById('myApiKey').textContent = data.api_key;
-                document.getElementById('quickStartKey').textContent = data.api_key;
-                alert('已重新生成');
+        // 加载兑换页面
+        function loadRedeem() {
+            if (currentUser) {
+                document.getElementById('redeemBalance').textContent = `$${(currentUser.points_balance || 0).toFixed(2)}`;
             }
         }
 
-        document.getElementById('password')?.addEventListener('keypress', e => { if (e.key === 'Enter') login(); });
+        // 加载个人资料
+        function loadProfile() {
+            if (!currentUser) return;
+            
+            document.getElementById('profileBalance').textContent = `$${(currentUser.points_balance || 0).toFixed(2)}`;
+            document.getElementById('profileRateLimit').textContent = currentUser.rate_limit || 2;
+            document.getElementById('profileCreatedAt').textContent = formatDateMonth(currentUser.created_at);
+            document.getElementById('profileEmail').textContent = currentUser.email;
+            document.getElementById('profileEmail2').textContent = currentUser.email;
+            document.getElementById('profileUserName').textContent = currentUser.username;
+            document.getElementById('profileAvatarLarge').textContent = currentUser.username[0].toUpperCase();
+            document.getElementById('editUsername').value = currentUser.username;
+        }
+
+        // 辅助函数
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            const date = new Date(dateStr);
+            return date.toLocaleString('zh-CN');
+        }
+
+        function formatDateMonth(dateStr) {
+            if (!dateStr) return '-';
+            const date = new Date(dateStr);
+            return `${date.getFullYear()}年${date.getMonth() + 1}月`;
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('已复制到剪贴板');
+            });
+        }
+
+        function toggleTheme() {
+            alert('主题切换功能待实现');
+        }
+
+        function showCreateKeyModal() {
+            alert('创建密钥功能待实现');
+        }
+
+        function toggleKey(id) {
+            alert('切换密钥状态: ' + id);
+        }
+
+        function editKey(id) {
+            alert('编辑密钥: ' + id);
+        }
+
+        function deleteKey(id) {
+            if (confirm('确定要删除这个密钥吗？')) {
+                alert('删除密钥: ' + id);
+            }
+        }
+
+        function resetUsageFilter() {
+            document.getElementById('usageKeyFilter').value = '';
+            document.getElementById('usageTimeFilter').value = '7';
+            loadUsage();
+        }
+
+        function exportUsage() {
+            alert('导出 CSV 功能待实现');
+        }
+
+        function redeemCode() {
+            const code = document.getElementById('redeemCode').value;
+            if (!code) {
+                alert('请输入兑换码');
+                return;
+            }
+            alert('兑换码: ' + code);
+        }
+
+        function updateProfile() {
+            const username = document.getElementById('editUsername').value;
+            alert('更新用户名: ' + username);
+        }
+
+        function changePassword() {
+            const current = document.getElementById('currentPassword').value;
+            const newPass = document.getElementById('newPassword').value;
+            const confirm = document.getElementById('confirmPassword').value;
+            
+            if (!current || !newPass || !confirm) {
+                alert('请填写所有字段');
+                return;
+            }
+            if (newPass !== confirm) {
+                alert('两次输入的新密码不一致');
+                return;
+            }
+            if (newPass.length < 8) {
+                alert('密码至少需要 8 个字符');
+                return;
+            }
+            
+            alert('修改密码功能待实现');
+        }
     </script>
 </body>
 </html>

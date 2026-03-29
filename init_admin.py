@@ -36,6 +36,9 @@ async def init_admin():
             )
         )
         
+        # 提交事务
+        await db.commit()
+        
         print(f"[OK] Admin user created:")
         print(f"   Username: {admin.username}")
         print(f"   API Key: {admin.api_key}")

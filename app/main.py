@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -62,11 +62,19 @@ if os.path.exists(frontend_path):
 @app.get("/")
 async def serve_frontend():
     """服务前端页面"""
-    # 优先返回运维监控后台
+    index_path = os.path.join(frontend_path, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    return {"message": "API Gateway is running", "docs": "/docs"}
+
+
+@app.get("/admin.html")
+async def serve_admin():
+    """服务管理端页面"""
     admin_path = os.path.join(frontend_path, "admin.html")
     if os.path.exists(admin_path):
         return FileResponse(admin_path)
-    return {"message": "API Gateway is running", "docs": "/docs"}
+    raise HTTPException(status_code=404, detail="Admin page not found")
 
 
 @app.get("/api")

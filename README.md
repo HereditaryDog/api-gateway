@@ -1,11 +1,11 @@
 # 🔀 API Gateway
 
-[![Version](https://img.shields.io/badge/version-0.0.3-blue.svg)](./CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](./CHANGELOG.md)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.109+-green.svg)](https://fastapi.tiangolo.com/)
 [![License](https://img.shields.io/badge/license-MIT-yellow.svg)](./LICENSE)
 
-> **轻量级 LLM API 聚合网关** - 统一管理多厂商 API，积分计费，智能负载均衡
+> **专业级 LLM API 聚合网关** - 统一管理多厂商 API，积分计费，智能负载均衡，深色主题可视化运维
 
 [English](./README_EN.md) | 中文 | [更新日志](./CHANGELOG.md)
 
@@ -38,11 +38,11 @@
 - **SSRF 防护** - 厂商 URL 白名单机制
 - **请求限流** - 防止恶意调用
 
-### 📊 运维监控
-- **深色主题** - 专业运维风格界面
-- **实时数据** - 请求数、Token、积分实时统计
-- **可视化图表** - 趋势图、分布图一目了然
-- **Key 池管理** - 多 Key 健康度监控
+### 📊 可视化运维
+- **深色主题** - 专业级深色 UI，参考行业标杆设计
+- **双端界面** - 用户端 + 管理端双界面
+- **数据可视化** - Chart.js 图表（趋势图、环形图）
+- **实时监控** - 请求数、Token、积分实时统计
 
 ---
 
@@ -90,25 +90,60 @@ python fix_login.py
 ### 5. 启动服务
 
 ```bash
-# Windows
+# 使用 Python 3.12+（推荐）
 python run.py
 
-# 或
-python -m uvicorn app.main:app --host 0.0.0.0 --port 8080
+# 或指定端口
+PORT=8082 python run.py
 ```
 
-访问 http://localhost:8080
+### 6. 访问系统
+
+| 界面 | 地址 | 说明 |
+|------|------|------|
+| 用户端 | http://localhost:8080 | 普通用户仪表盘 |
+| 管理端 | http://localhost:8080/admin.html | 管理员运维监控 |
+| API文档 | http://localhost:8080/docs | Swagger 文档 |
+
+**默认账号**: `admin` / `admin123`
 
 ---
 
 ## 📖 使用指南
 
-### 1. 添加上游 API Key
+### 用户端功能
 
-1. 登录管理后台 (http://localhost:8080)
-2. 进入「Key 池管理」页面
-3. 点击「添加 Key」按钮
-4. 选择提供商，粘贴你的 API Key
+#### 1. 仪表盘
+- 查看余额、API密钥、请求数、消费统计
+- Token 使用趋势图表
+- 模型分布环形图
+- 最近使用记录
+
+#### 2. API 密钥管理
+- 创建和管理 API 密钥
+- 查看密钥用量统计
+- 一键复制密钥
+
+#### 3. 使用记录
+- 详细的调用日志
+- 支持按时间范围筛选
+- 导出 CSV 数据
+
+#### 4. 兑换码充值
+- 使用兑换码充值余额
+- 查看充值历史
+
+### 管理端功能
+
+#### 1. Key 池管理
+- 添加上游 API Keys
+- 监控 Key 健康状态
+- 多厂商统一管理
+
+#### 2. 用户管理
+- 创建和管理用户
+- 积分充值和调整
+- 查看用户使用情况
 
 ### 2. 创建用户并充值
 
@@ -122,28 +157,20 @@ python -m uvicorn app.main:app --host 0.0.0.0 --port 8080
 from openai import OpenAI
 
 client = OpenAI(
-    api_key="用户的API Key",  # 从管理后台获取
+    api_key="sk-xxxxxxxxxxxxx",  # 从用户端获取
     base_url="http://localhost:8080/v1",
 )
 
-# 非流式调用
+# 支持的模型格式: provider/model
+# - openai/gpt-4
+# - anthropic/claude-3-opus
+# - deepseek/deepseek-chat
+
 response = client.chat.completions.create(
-    model="openai/gpt-4",  # 格式: provider/model
+    model="openai/gpt-4",
     messages=[{"role": "user", "content": "Hello!"}]
 )
 print(response.choices[0].message.content)
-
-# 流式调用
-response = client.chat.completions.create(
-    model="deepseek/deepseek-chat",
-    messages=[{"role": "user", "content": "Hello!"}],
-    stream=True
-)
-
-for chunk in response:
-    content = chunk.choices[0].delta.content
-    if content:
-        print(content, end="")
 ```
 
 ---
@@ -159,6 +186,8 @@ for chunk in response:
 | POST | `/api/auth/login` | 用户登录 |
 | GET | `/api/users/me` | 获取当前用户 |
 | GET | `/api/users/me/points` | 查询积分余额 |
+| GET | `/api/usage/dashboard` | 仪表盘统计 |
+| GET | `/api/usage/logs` | 使用日志 |
 | GET | `/api/upstream/keys` | Key 池列表 |
 | POST | `/v1/chat/completions` | 聊天完成 |
 | GET | `/v1/models` | 模型列表 |
