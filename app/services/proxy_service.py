@@ -238,32 +238,37 @@ class ProxyService:
         provider_name, actual_model = get_provider_from_model(model)
         
         # SSRF 安全检查 - 检查白名单或数据库中的自定义 provider
-        if not is_provider_allowed(provider_name):
-            # 检查是否是数据库中的自定义 provider
-            # 通过 model_mapping 查找匹配的 provider
-            from sqlalchemy import select
-            from app.models.upstream import UpstreamProvider
-            
-            # 获取所有自定义 provider
-            result = await db.execute(select(UpstreamProvider))
-            all_providers = result.scalars().all()
-            
-            custom_provider = None
-            for p in all_providers:
-                if p.model_mapping and actual_model in p.model_mapping:
-                    custom_provider = p
-                    provider_name = p.name  # 更新 provider_name
-                    break
-            
-            if not custom_provider:
-                # 再尝试通过名称匹配
-                result = await db.execute(
-                    select(UpstreamProvider).where(UpstreamProvider.name.ilike(f"%{provider_name}%"))
+        # 通过 model_mapping 查找匹配的 provider
+        from sqlalchemy import select
+        from app.models.upstream import UpstreamProvider
+        
+        custom_provider = None
+        
+        # 获取所有自定义 provider
+        result = await db.execute(select(UpstreamProvider))
+        all_providers = result.scalars().all()
+        
+        for p in all_providers:
+            if p.model_mapping and actual_model in p.model_mapping:
+                custom_provider = p
+                provider_name = p.provider_type.value if p.provider_type else p.name
+                break
+        
+        if not custom_provider:
+            # 尝试通过名称或类型匹配
+            result = await db.execute(
+                select(UpstreamProvider).where(
+                    (UpstreamProvider.provider_type == provider_name) |
+                    UpstreamProvider.name.ilike(f"%{provider_name}%")
                 )
-                custom_provider = result.scalar_one_or_none()
-            
-            if not custom_provider:
-                raise HTTPException(status_code=400, detail=f"Provider not allowed: {provider_name}")
+            )
+            custom_provider = result.scalar_one_or_none()
+            if custom_provider:
+                provider_name = custom_provider.provider_type.value if custom_provider.provider_type else custom_provider.name
+        
+        # 如果仍然找不到，检查白名单
+        if not custom_provider and not is_provider_allowed(provider_name):
+            raise HTTPException(status_code=400, detail=f"Provider not allowed: {provider_name}")
         
         # 获取消息
         messages = body.get("messages", [])
