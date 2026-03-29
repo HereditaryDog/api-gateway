@@ -72,7 +72,9 @@ async def list_users(
     db: AsyncSession = Depends(get_db)
 ):
     """列出所有用户 (管理员)"""
-    return await UserService.list_users(db, skip=skip, limit=limit)
+    users = await UserService.list_users(db, skip=skip, limit=limit)
+    # 转换为 Pydantic 模型
+    return [UserResponse.model_validate(user) for user in users]
 
 
 @router.post("/", response_model=UserResponse)
