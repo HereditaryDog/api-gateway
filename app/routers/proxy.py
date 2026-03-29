@@ -5,10 +5,10 @@ from typing import Optional
 
 from app.core.database import get_db
 from app.services.user_service import UserService
-from app.services.proxy_service import ProxyService
+from app.services.proxy_service_v2 import ProxyServiceV2
 
 router = APIRouter(prefix="/v1")
-proxy_service = ProxyService()
+proxy_service = ProxyServiceV2()
 
 
 async def get_user_by_api_key(
@@ -41,7 +41,7 @@ async def chat_completions(
     user = Depends(get_user_by_api_key),
     db: AsyncSession = Depends(get_db)
 ):
-    """OpenAI 格式的聊天完成接口"""
+    """OpenAI 格式的聊天完成接口 (V2 - 支持多种计费模式)"""
     body = await request.json()
     
     return await proxy_service.chat_completions(db, user, request, body)

@@ -41,6 +41,12 @@ class UpstreamProvider(Base):
     is_active = Column(Boolean, default=True, nullable=False)
     priority = Column(Integer, default=100, nullable=False)  # 优先级，数字越小优先级越高
     
+    # 适配器类型 (新增)
+    adapter_type = Column(String(50), default="standard")  # 'standard', 'coding_plan', 'alibaba_bailian', 'custom'
+    
+    # 风控池大小 (新增)
+    risk_pool_size = Column(Integer, default=1)  # 多账号池大小（用于风控）
+    
     # 元数据
     remark = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

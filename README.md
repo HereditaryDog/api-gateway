@@ -1,11 +1,11 @@
 # 🔀 API Gateway
 
-[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](./CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](./CHANGELOG.md)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.109+-green.svg)](https://fastapi.tiangolo.com/)
 [![License](https://img.shields.io/badge/license-MIT-yellow.svg)](./LICENSE)
 
-> **专业级 LLM API 聚合网关** - 统一管理多厂商 API，积分计费，智能负载均衡，深色主题可视化运维
+> **专业级 LLM API 聚合网关 V2** - 统一管理多厂商 API，支持 Token/Request 双计费模式，Coding Plan 风控体系，深色主题可视化运维
 
 [English](./README_EN.md) | 中文 | [更新日志](./CHANGELOG.md)
 
@@ -26,17 +26,21 @@
 - **Google** - Gemini Pro, Gemini Flash
 - **SiliconFlow** - 多种开源模型
 - **Moonshot** - Moonshot AI 系列
+- **火山引擎** - 豆包大模型系列
+- **Coding Plan** - 订阅制厂商（阿里云百炼等）
 
-### 💰 积分计费系统
+### 💰 灵活计费系统
 - **双阶段计费**: 预扣 + 确认/回滚机制
-- **失败保护**: 调用失败自动退还积分
-- **精确计费**: 不同模型不同积分成本
+- **多种模式**: 支持 Token/Request/Subscription 计费
+- **Coding Plan**: 按请求计费，30-50% 利润率
+- **失败保护**: 调用失败自动退还
 
-### 🛡️ 安全特性
+### 🛡️ 风控体系
+- **多账号池** - 动态负载均衡，健康度评分
+- **滚动配额** - 5小时/周/月窗口管理
+- **流量整形** - QPS 限制 + 随机延迟
+- **故障转移** - 自动切换 + 熔断机制
 - **Fernet 加密** - API Keys 加密存储
-- **bcrypt 哈希** - 用户密码安全存储
-- **SSRF 防护** - 厂商 URL 白名单机制
-- **请求限流** - 防止恶意调用
 
 ### 📊 可视化运维
 - **深色主题** - 专业级深色 UI，参考行业标杆设计
@@ -217,7 +221,9 @@ api-gateway/
 
 ---
 
-## 💰 积分成本表
+## 💰 计费模式
+
+### Token 计费（标准厂商）
 
 | 模型 | Provider | 积分/1K tokens |
 |------|----------|----------------|
@@ -228,6 +234,29 @@ api-gateway/
 | claude-3-sonnet | Anthropic | 3 |
 | deepseek-chat | DeepSeek | 1 |
 | gemini-pro | Google | 1 |
+
+### Request 计费（Coding Plan）
+
+适用于订阅制厂商，按请求次数计费：
+
+```
+售价 = 成本 × (1 + 利润率)
+
+示例配置:
+- 上游成本: 0.0004 元/请求
+- 利润率: 50%
+- 售价: 0.0006 元/请求 (约 0.06 积分)
+```
+
+**配置 Coding Plan Provider:**
+
+```bash
+# 快速配置
+python init_coding_plan.py
+
+# 查看配置
+python init_coding_plan.py list
+```
 
 ---
 
@@ -263,9 +292,12 @@ docker-compose up -d
 
 ---
 
-## 📝 更新日志
+## 📚 架构文档
 
-查看 [CHANGELOG.md](./CHANGELOG.md) 了解版本更新历史。
+- [CHANGELOG.md](./CHANGELOG.md) - 版本更新历史
+- [ARCHITECTURE_V2.md](./ARCHITECTURE_V2.md) - V2 架构详细设计
+
+---
 
 ---
 
