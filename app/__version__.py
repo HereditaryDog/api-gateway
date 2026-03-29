@@ -1,7 +1,7 @@
 """
 API Gateway 版本信息
 """
-__version__ = "0.0.2"
+__version__ = "0.0.3"
 __title__ = "API Gateway"
 __description__ = "LLM API 聚合转发平台"
 __author__ = "HereditaryDog"
