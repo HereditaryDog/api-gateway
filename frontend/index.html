@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Gateway - 智能 API 转发平台</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --primary-light: #818cf8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #0f172a;
+            --dark-light: #1e293b;
+            --gray: #64748b;
+            --gray-light: #94a3b8;
+            --bg: #f1f5f9;
+            --card-bg: #ffffff;
+            --border: #e2e8f0;
+            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        /* 登录页 */
+        .login-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            padding: 20px;
+        }
+
+        .login-box {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 40px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .login-logo {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .login-logo i {
+            font-size: 48px;
+            color: var(--primary);
+            margin-bottom: 16px;
+        }
+
+        .login-logo h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .login-logo p {
+            color: var(--gray);
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        .form-group { margin-bottom: 20px; }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--dark);
+            margin-bottom: 8px;
+        }
+
+        .input-wrapper { position: relative; }
+
+        .input-wrapper i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray-light);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px 12px 44px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 15px;
+            transition: all 0.2s;
+            background: var(--card-bg);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-sm { padding: 8px 16px; font-size: 13px; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-warning { background: var(--warning); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alert-error {
+            background: #fef2f2;
+            color: var(--danger);
+            border: 1px solid #fecaca;
+        }
+
+        /* 主布局 */
+        .app-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* 侧边栏 */
+        .sidebar {
+            width: 260px;
+            background: var(--dark);
+            color: white;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            padding: 24px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sidebar-logo i {
+            font-size: 28px;
+            color: var(--primary-light);
+        }
+
+        .sidebar-logo span {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .nav-menu { padding: 16px 12px; }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 4px;
+            color: rgba(255,255,255,0.7);
+        }
+
+        .nav-item:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+
+        .nav-item.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .nav-item i { width: 20px; text-align: center; }
+        .nav-item span { font-size: 14px; font-weight: 500; }
+
+        .sidebar-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 16px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .user-meta { flex: 1; }
+
+        .user-name { font-size: 14px; font-weight: 500; }
+        .user-role { font-size: 12px; color: rgba(255,255,255,0.5); }
+
+        /* 主内容区 */
+        .main-content {
+            flex: 1;
+            margin-left: 260px;
+            padding: 24px 32px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .page-title h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .page-title p {
+            color: var(--gray);
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        /* 统计卡片 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .stat-icon.purple { background: rgba(99, 102, 241, 0.1); color: var(--primary); }
+        .stat-icon.green { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+        .stat-icon.orange { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
+        .stat-icon.blue { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+
+        .stat-info h3 {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .stat-info p {
+            font-size: 13px;
+            color: var(--gray);
+            margin-top: 4px;
+        }
+
+        /* 内容卡片 */
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            margin-bottom: 24px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .card-body { padding: 20px 24px; }
+
+        /* 表格 */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .data-table th {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--gray);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background: var(--bg);
+        }
+
+        .data-table tr:hover { background: var(--bg); }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+
+        .badge-success { background: #d1fae5; color: #065f46; }
+        .badge-success .badge-dot { background: var(--success); }
+        .badge-warning { background: #fef3c7; color: #92400e; }
+        .badge-warning .badge-dot { background: var(--warning); }
+        .badge-danger { background: #fee2e2; color: #991b1b; }
+        .badge-danger .badge-dot { background: var(--danger); }
+
+        /* 积分显示 */
+        .points-display {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        /* 模态框 */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: var(--card-bg);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 480px;
+            transform: scale(0.95);
+            transition: all 0.2s;
+        }
+
+        .modal-overlay.active .modal { transform: scale(1); }
+
+        .modal-header {
+            padding: 24px 24px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title { font-size: 18px; font-weight: 600; }
+
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--gray);
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: var(--bg);
+            color: var(--dark);
+        }
+
+        .modal-body { padding: 20px 24px; }
+
+        .modal-footer {
+            padding: 0 24px 24px;
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .btn-secondary {
+            background: var(--bg);
+            color: var(--dark);
+        }
+
+        .btn-secondary:hover { background: var(--border); }
+
+        /* API Key 展示 */
+        .api-key-box {
+            background: var(--bg);
+            border-radius: 10px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 16px 0;
+        }
+
+        .api-key-text {
+            flex: 1;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 13px;
+            color: var(--dark);
+            word-break: break-all;
+        }
+
+        .api-key-copy {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            border: none;
+            background: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gray);
+            transition: all 0.2s;
+        }
+
+        .api-key-copy:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .empty-state i {
+            font-size: 64px;
+            color: var(--border);
+            margin-bottom: 16px;
+        }
+
+        .empty-state h3 {
+            font-size: 16px;
+            color: var(--dark);
+            margin-bottom: 8px;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+            color: var(--gray);
+        }
+
+        /* 代码块 */
+        .code-block {
+            background: var(--dark);
+            color: #e2e8f0;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            margin: 12px 0;
+        }
+
+        .code-block .comment { color: #64748b; }
+        .code-block .string { color: #a5d6ff; }
+        .code-block .keyword { color: #ff7b72; }
+
+        .hidden { display: none !important; }
+
+        @media (max-width: 1200px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .main-content { margin-left: 0; }
+            .stats-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <!-- 登录页 -->
+    <div id="loginPage" class="login-page">
+        <div class="login-box">
+            <div class="login-logo">
+                <i class="fas fa-network-wired"></i>
+                <div>
+                    <h1>API Gateway</h1>
+                    <p>智能 API 转发管理平台</p>
+                </div>
+            </div>
+            <div id="loginError" class="alert alert-error"></div>
+            <div class="form-group">
+                <label>用户名</label>
+                <div class="input-wrapper">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="username" class="form-control" placeholder="请输入用户名">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>密码</label>
+                <div class="input-wrapper">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="password" class="form-control" placeholder="请输入密码">
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="login()">
+                <i class="fas fa-sign-in-alt"></i> 登录
+            </button>
+        </div>
+    </div>
+
+    <!-- 主应用 -->
+    <div id="appPage" class="hidden">
+        <div class="app-layout">
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <div class="sidebar-logo">
+                        <i class="fas fa-network-wired"></i>
+                        <span>API Gateway</span>
+                    </div>
+                </div>
+                <nav class="nav-menu">
+                    <div class="nav-item active" onclick="navTo('dashboard')">
+                        <i class="fas fa-chart-line"></i>
+                        <span>仪表盘</span>
+                    </div>
+                    <div class="nav-item" onclick="navTo('users')">
+                        <i class="fas fa-users"></i>
+                        <span>用户管理</span>
+                    </div>
+                    <div class="nav-item" onclick="navTo('upstream')">
+                        <i class="fas fa-server"></i>
+                        <span>上游管理</span>
+                    </div>
+                    <div class="nav-item" onclick="navTo('usage')">
+                        <i class="fas fa-chart-bar"></i>
+                        <span>使用统计</span>
+                    </div>
+                    <div class="nav-item" onclick="navTo('docs')">
+                        <i class="fas fa-book"></i>
+                        <span>接口文档</span>
+                    </div>
+                </nav>
+                <div class="sidebar-footer">
+                    <div class="user-info">
+                        <div class="user-avatar" id="userAvatar">A</div>
+                        <div class="user-meta">
+                            <div class="user-name" id="userName">Admin</div>
+                            <div class="user-role" id="userPoints">0 积分</div>
+                        </div>
+                        <i class="fas fa-sign-out-alt" onclick="logout()" style="cursor:pointer;opacity:0.7;"></i>
+                    </div>
+                </div>
+            </aside>
+
+            <main class="main-content">
+                <!-- 仪表盘 -->
+                <div id="dashboardView">
+                    <div class="page-header">
+                        <div class="page-title">
+                            <h1>仪表盘</h1>
+                            <p>实时监控平台运行状态</p>
+                        </div>
+                        <div class="points-display" id="myPoints">
+                            <i class="fas fa-coins"></i>
+                            <span>0 积分</span>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon purple"><i class="fas fa-users"></i></div>
+                            <div class="stat-info">
+                                <h3 id="statUsers">-</h3>
+                                <p>总用户数</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon green"><i class="fas fa-key"></i></div>
+                            <div class="stat-info">
+                                <h3 id="statKeys">-</h3>
+                                <p>上游 Keys</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon orange"><i class="fas fa-bolt"></i></div>
+                            <div class="stat-info">
+                                <h3 id="statTodayReq">-</h3>
+                                <p>今日请求</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon blue"><i class="fas fa-coins"></i></div>
+                            <div class="stat-info">
+                                <h3 id="statTodayPoints">-</h3>
+                                <p>今日消耗积分</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 快速开始 -->
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title"><i class="fas fa-rocket" style="margin-right:8px;color:var(--primary);"></i>快速开始</span>
+                        </div>
+                        <div class="card-body">
+                            <p style="color:var(--gray);margin-bottom:16px;">使用以下代码调用 API：</p>
+                            <div class="code-block">
+<span class="keyword">from</span> openai <span class="keyword">import</span> OpenAI
+
+client = OpenAI(
+    api_key=<span class="string">"<span id="quickStartKey">your-api-key</span>"</span>,
+    base_url=<span class="string">"<span id="baseUrl">http://localhost:8000/v1</span>"</span>,
+)
+
+response = client.chat.completions.create(
+    model=<span class="string">"openai/gpt-3.5-turbo"</span>,  <span class="comment"># 格式: provider/model</span>
+    messages=[{<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"Hello!"</span>}]
+)
+<span class="keyword">print</span>(response.choices[0].message.content)
+                            </div>
+                            <p style="color:var(--gray);font-size:13px;margin-top:12px;">
+                                <i class="fas fa-info-circle"></i> 
+                                支持格式: <code>openai/gpt-4</code>, <code>deepseek/deepseek-chat</code>, <code>anthropic/claude-3-opus</code> 等
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title"><i class="fas fa-history" style="margin-right:8px;color:var(--primary);"></i>最近请求</span>
+                        </div>
+                        <div class="card-body" style="padding:0;">
+                            <table class="data-table">
+                                <thead>
+                                    <tr><th>时间</th><th>用户</th><th>模型</th><th>Tokens</th><th>积分</th><th>状态</th></tr>
+                                </thead>
+                                <tbody id="recentLogs">
+                                    <tr><td colspan="6"><div class="empty-state"><i class="fas fa-inbox"></i><h3>暂无数据</h3></div></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 用户管理 -->
+                <div id="usersView" class="hidden">
+                    <div class="page-header">
+                        <div class="page-title"><h1>用户管理</h1><p>管理平台用户及积分</p></div>
+                        <button class="btn btn-primary" onclick="showModal('addUserModal')">
+                            <i class="fas fa-plus"></i> 添加用户
+                        </button>
+                    </div>
+                    <div class="card">
+                        <div class="card-body" style="padding:0;">
+                            <table class="data-table">
+                                <thead>
+                                    <tr><th>用户</th><th>API Key</th><th>积分余额</th><th>状态</th><th>操作</th></tr>
+                                </thead>
+                                <tbody id="usersTable"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 上游管理 -->
+                <div id="upstreamView" class="hidden">
+                    <div class="page-header">
+                        <div class="page-title"><h1>上游管理</h1><p>管理 API Keys 及负载均衡</p></div>
+                        <button class="btn btn-primary" onclick="showModal('addKeyModal')">
+                            <i class="fas fa-plus"></i> 添加 Key
+                        </button>
+                    </div>
+                    <div class="card">
+                        <div class="card-body" style="padding:0;">
+                            <table class="data-table">
+                                <thead>
+                                    <tr><th>提供商</th><th>API Key</th><th>请求数</th><th>状态</th><th>操作</th></tr>
+                                </thead>
+                                <tbody id="upstreamTable"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 使用统计 -->
+                <div id="usageView" class="hidden">
+                    <div class="page-header">
+                        <div class="page-title"><h1>使用统计</h1><p>详细的用量分析和趋势</p></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-title">7日使用趋势</span></div>
+                        <div class="card-body">
+                            <div id="usageChart" style="height:300px;display:flex;align-items:center;justify-content:center;color:var(--gray);">图表加载中...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 接口文档 -->
+                <div id="docsView" class="hidden">
+                    <div class="page-header">
+                        <div class="page-title"><h1>接口文档</h1><p>API 使用指南</p></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-title">支持的模型</span></div>
+                        <div class="card-body">
+                            <table class="data-table">
+                                <thead>
+                                    <tr><th>模型</th><th>Provider</th><th>积分/1K tokens</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td><code>openai/gpt-4</code></td><td>OpenAI</td><td>30</td></tr>
+                                    <tr><td><code>openai/gpt-4o</code></td><td>OpenAI</td><td>5</td></tr>
+                                    <tr><td><code>openai/gpt-3.5-turbo</code></td><td>OpenAI</td><td>1</td></tr>
+                                    <tr><td><code>anthropic/claude-3-opus</code></td><td>Anthropic</td><td>15</td></tr>
+                                    <tr><td><code>anthropic/claude-3-sonnet</code></td><td>Anthropic</td><td>3</td></tr>
+                                    <tr><td><code>deepseek/deepseek-chat</code></td><td>DeepSeek</td><td>1</td></tr>
+                                    <tr><td><code>deepseek/deepseek-coder</code></td><td>DeepSeek</td><td>1</td></tr>
+                                    <tr><td><code>gemini/gemini-pro</code></td><td>Google</td><td>1</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-title">我的 API Key</span></div>
+                        <div class="card-body">
+                            <p style="color:var(--gray);margin-bottom:12px;">使用此 API Key 调用转发接口</p>
+                            <div class="api-key-box">
+                                <span class="api-key-text" id="myApiKey">sk-********************************</span>
+                                <button class="api-key-copy" onclick="copyApiKey()"><i class="fas fa-copy"></i></button>
+                            </div>
+                            <button class="btn btn-warning btn-sm" onclick="regenerateKey()">
+                                <i class="fas fa-sync-alt"></i> 重新生成
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- 添加用户模态框 -->
+    <div id="addUserModal" class="modal-overlay" onclick="closeModalOnOverlay(event, 'addUserModal')">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">添加新用户</h3>
+                <div class="modal-close" onclick="hideModal('addUserModal')"><i class="fas fa-times"></i></div>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>用户名</label>
+                    <input type="text" id="newUsername" class="form-control" placeholder="username" style="padding-left:16px;">
+                </div>
+                <div class="form-group">
+                    <label>密码</label>
+                    <input type="password" id="newPassword" class="form-control" placeholder="password" style="padding-left:16px;">
+                </div>
+                <div class="form-group">
+                    <label>邮箱 (可选)</label>
+                    <input type="email" id="newEmail" class="form-control" placeholder="email@example.com" style="padding-left:16px;">
+                </div>
+                <div class="form-group">
+                    <label>初始积分</label>
+                    <input type="number" id="newPoints" class="form-control" value="100" style="padding-left:16px;">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="hideModal('addUserModal')">取消</button>
+                <button class="btn btn-primary" onclick="addUser()">创建</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加 Key 模态框 -->
+    <div id="addKeyModal" class="modal-overlay" onclick="closeModalOnOverlay(event, 'addKeyModal')">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">添加上游 API Key</h3>
+                <div class="modal-close" onclick="hideModal('addKeyModal')"><i class="fas fa-times"></i></div>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>提供商</label>
+                    <select id="keyProvider" class="form-control" style="padding-left:16px;">
+                        <option value="openai">OpenAI</option>
+                        <option value="anthropic">Anthropic (Claude)</option>
+                        <option value="deepseek">DeepSeek</option>
+                        <option value="gemini">Google Gemini</option>
+                        <option value="siliconflow">SiliconFlow</option>
+                        <option value="moonshot">Moonshot</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>API Key</label>
+                    <input type="text" id="keyValue" class="form-control" placeholder="sk-..." style="padding-left:16px;">
+                </div>
+                <div class="form-group">
+                    <label>备注 (可选)</label>
+                    <input type="text" id="keyRemark" class="form-control" placeholder="例如：账号1" style="padding-left:16px;">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="hideModal('addKeyModal')">取消</button>
+                <button class="btn btn-primary" onclick="addKey()">添加</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 充值模态框 -->
+    <div id="rechargeModal" class="modal-overlay" onclick="closeModalOnOverlay(event, 'rechargeModal')">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">用户充值</h3>
+                <div class="modal-close" onclick="hideModal('rechargeModal')"><i class="fas fa-times"></i></div>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>充值积分</label>
+                    <input type="number" id="rechargeAmount" class="form-control" value="1000" style="padding-left:16px;">
+                </div>
+                <div class="form-group">
+                    <label>备注</label>
+                    <input type="text" id="rechargeRemark" class="form-control" placeholder="充值说明" style="padding-left:16px;">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="hideModal('rechargeModal')">取消</button>
+                <button class="btn btn-success" onclick="rechargeUser()">确认充值</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        let token = localStorage.getItem('token');
+        let currentUser = null;
+        let currentRechargeUserId = null;
+
+        if (token) showApp();
+
+        function showApp() {
+            document.getElementById('loginPage').classList.add('hidden');
+            document.getElementById('appPage').classList.remove('hidden');
+            document.getElementById('baseUrl').textContent = API_BASE + '/v1';
+            loadDashboard();
+        }
+
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            try {
+                const formData = new URLSearchParams();
+                formData.append('username', username);
+                formData.append('password', password);
+                const res = await fetch(`${API_BASE}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    token = data.access_token;
+                    currentUser = data.user;
+                    localStorage.setItem('token', token);
+                    document.getElementById('userName').textContent = currentUser.username;
+                    document.getElementById('userAvatar').textContent = currentUser.username[0].toUpperCase();
+                    document.getElementById('userPoints').textContent = Math.floor(currentUser.points_balance || 0) + ' 积分';
+                    document.getElementById('myApiKey').textContent = currentUser.api_key;
+                    document.getElementById('quickStartKey').textContent = currentUser.api_key;
+                    showApp();
+                } else {
+                    document.getElementById('loginError').textContent = data.detail || '登录失败';
+                    document.getElementById('loginError').style.display = 'block';
+                }
+            } catch (e) {
+                document.getElementById('loginError').textContent = '网络错误';
+                document.getElementById('loginError').style.display = 'block';
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            location.reload();
+        }
+
+        function navTo(view) {
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            ['dashboard', 'users', 'upstream', 'usage', 'docs'].forEach(v => {
+                document.getElementById(v + 'View').classList.add('hidden');
+            });
+            document.getElementById(view + 'View').classList.remove('hidden');
+            if (view === 'dashboard') loadDashboard();
+            if (view === 'users') loadUsers();
+            if (view === 'upstream') loadUpstream();
+            if (view === 'usage') loadUsage();
+        }
+
+        async function apiGet(path) {
+            const res = await fetch(`${API_BASE}${path}`, { headers: { 'Authorization': `Bearer ${token}` } });
+            if (res.status === 401) { logout(); return null; }
+            return res.json();
+        }
+
+        async function apiPost(path, body) {
+            const res = await fetch(`${API_BASE}${path}`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            return res;
+        }
+
+        async function loadDashboard() {
+            const stats = await apiGet('/api/usage/dashboard');
+            if (!stats) return;
+            document.getElementById('statUsers').textContent = stats.total_users;
+            document.getElementById('statKeys').textContent = stats.total_upstream_keys;
+            document.getElementById('statTodayReq').textContent = stats.today_requests.toLocaleString();
+            document.getElementById('statTodayPoints').textContent = stats.today_points || 0;
+            document.getElementById('myPoints').innerHTML = `<i class="fas fa-coins"></i><span>${Math.floor(currentUser?.points_balance || 0)} 积分</span>`;
+            
+            const logsHtml = stats.recent_logs.map(log => `
+                <tr>
+                    <td>${new Date(log.created_at).toLocaleString()}</td>
+                    <td>用户${log.user_id}</td>
+                    <td><span class="badge badge-warning"><span class="badge-dot"></span>${log.model}</span></td>
+                    <td>${log.total_tokens?.toLocaleString() || 0}</td>
+                    <td>${log.points_consumed || 0}</td>
+                    <td>${log.response_status === 200 ? '<span class="badge badge-success"><span class="badge-dot"></span>成功</span>' : '<span class="badge badge-danger"><span class="badge-dot"></span>失败</span>'}</td>
+                </tr>
+            `).join('');
+            document.getElementById('recentLogs').innerHTML = logsHtml || '<tr><td colspan="6"><div class="empty-state"><i class="fas fa-inbox"></i><h3>暂无数据</h3></div></td></tr>';
+        }
+
+        async function loadUsers() {
+            const users = await apiGet('/api/users/');
+            if (!users) return;
+            const html = users.map(u => `
+                <tr>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <div class="user-avatar" style="background:var(--primary);color:white;width:32px;height:32px;font-size:12px;">${u.username[0].toUpperCase()}</div>
+                            <div><div style="font-weight:500;">${u.username}</div><div style="font-size:12px;color:var(--gray);">${u.email || '无邮箱'}</div></div>
+                        </div>
+                    </td>
+                    <td><code style="background:var(--bg);padding:4px 8px;border-radius:4px;font-size:12px;">${u.api_key.substring(0, 16)}...</code></td>
+                    <td><span style="font-weight:600;color:var(--primary);">${Math.floor(u.points_balance || 0)}</span></td>
+                    <td>${u.is_active ? '<span class="badge badge-success"><span class="badge-dot"></span>正常</span>' : '<span class="badge badge-danger"><span class="badge-dot"></span>禁用</span>'}</td>
+                    <td><button class="btn btn-success btn-sm" onclick="showRechargeModal(${u.id})"><i class="fas fa-plus-circle"></i> 充值</button></td>
+                </tr>
+            `).join('');
+            document.getElementById('usersTable').innerHTML = html;
+        }
+
+        async function loadUpstream() {
+            const keys = await apiGet('/api/upstream/keys');
+            if (!keys) return;
+            const html = keys.map(k => `
+                <tr>
+                    <td><span class="badge badge-warning"><i class="fas fa-server" style="margin-right:4px;"></i>Provider ${k.provider_id}</span></td>
+                    <td><code style="background:var(--bg);padding:4px 8px;border-radius:4px;font-size:12px;">${k.encrypted_key.substring(0, 20)}...</code></td>
+                    <td>${k.total_requests.toLocaleString()}</td>
+                    <td>${k.is_active ? '<span class="badge badge-success"><span class="badge-dot"></span>正常</span>' : '<span class="badge badge-danger"><span class="badge-dot"></span>禁用</span>'}</td>
+                    <td><button class="btn ${k.is_active ? 'btn-danger' : 'btn-success'} btn-sm" onclick="toggleKey(${k.id})">${k.is_active ? '禁用' : '启用'}</button></td>
+                </tr>
+            `).join('');
+            document.getElementById('upstreamTable').innerHTML = html || '<tr><td colspan="5"><div class="empty-state"><i class="fas fa-server"></i><h3>暂无上游 Key</h3></div></td></tr>';
+        }
+
+        async function loadUsage() {
+            const stats = await apiGet('/api/usage/stats/summary?days=7');
+            if (!stats) return;
+            let html = '<table class="data-table"><thead><tr><th>日期</th><th>请求数</th><th>Tokens</th><th>积分消耗</th></tr></thead><tbody>';
+            html += stats.daily.map(d => `<tr><td>${d.date}</td><td>${d.requests.toLocaleString()}</td><td>${(d.tokens/1000).toFixed(1)}K</td><td>${d.points || 0}</td></tr>`).join('');
+            html += '</tbody></table>';
+            document.getElementById('usageChart').innerHTML = html;
+        }
+
+        function showModal(id) { document.getElementById(id).classList.add('active'); }
+        function hideModal(id) { document.getElementById(id).classList.remove('active'); }
+        function closeModalOnOverlay(event, id) { if (event.target === document.getElementById(id)) hideModal(id); }
+
+        async function addUser() {
+            const body = {
+                username: document.getElementById('newUsername').value,
+                password: document.getElementById('newPassword').value,
+                email: document.getElementById('newEmail').value || null,
+                total_quota: 0  // 使用积分系统
+            };
+            const res = await apiPost('/api/users/', body);
+            if (res.ok) {
+                const user = await res.json();
+                // 充值初始积分
+                await fetch(`${API_BASE}/api/users/${user.id}/add-points?points=${document.getElementById('newPoints').value}&remark=初始充值`, {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${token}` }
+                });
+                hideModal('addUserModal');
+                loadUsers();
+            } else {
+                alert('创建失败');
+            }
+        }
+
+        async function addKey() {
+            // 需要先获取 provider_id
+            const providers = await apiGet('/api/upstream/providers');
+            const providerMap = { 'openai': 1, 'anthropic': 2, 'deepseek': 3, 'gemini': 4, 'siliconflow': 5, 'moonshot': 6 };
+            const providerName = document.getElementById('keyProvider').value;
+            const providerId = providerMap[providerName] || 1;
+            
+            const body = {
+                provider_id: providerId,
+                api_key: document.getElementById('keyValue').value,
+                remark: document.getElementById('keyRemark').value
+            };
+            const res = await apiPost('/api/upstream/keys', body);
+            if (res.ok) { hideModal('addKeyModal'); loadUpstream(); }
+            else alert('添加失败');
+        }
+
+        function showRechargeModal(userId) { currentRechargeUserId = userId; showModal('rechargeModal'); }
+
+        async function rechargeUser() {
+            const amount = parseInt(document.getElementById('rechargeAmount').value);
+            const remark = document.getElementById('rechargeRemark').value;
+            const res = await fetch(`${API_BASE}/api/users/${currentRechargeUserId}/add-points?points=${amount}&remark=${encodeURIComponent(remark)}`, {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) { hideModal('rechargeModal'); loadUsers(); }
+        }
+
+        async function toggleKey(id) {
+            await fetch(`${API_BASE}/api/upstream/keys/${id}/toggle`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
+            loadUpstream();
+        }
+
+        function copyApiKey() {
+            navigator.clipboard.writeText(document.getElementById('myApiKey').textContent).then(() => alert('已复制'));
+        }
+
+        async function regenerateKey() {
+            if (!confirm('确定要重新生成 API Key 吗？')) return;
+            const res = await fetch(`${API_BASE}/api/users/me/regenerate-api-key`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
+            if (res.ok) {
+                const data = await res.json();
+                document.getElementById('myApiKey').textContent = data.api_key;
+                document.getElementById('quickStartKey').textContent = data.api_key;
+                alert('已重新生成');
+            }
+        }
+
+        document.getElementById('password')?.addEventListener('keypress', e => { if (e.key === 'Enter') login(); });
+    </script>
+</body>
+</html>
