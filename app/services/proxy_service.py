@@ -11,7 +11,7 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import User
-from app.models.upstream import UpstreamKey
+from app.models.upstream import UpstreamKey, UpstreamProvider
 from app.services.upstream_service import UpstreamService
 from app.services.points_service import PointsService
 from app.core.encryption import decrypt_data
@@ -85,7 +85,7 @@ class ProxyService:
     async def _call_provider_with_retry(
         self,
         db: AsyncSession,
-        provider_name: str,
+        provider_record: UpstreamProvider,
         actual_model: str,
         messages: list,
         stream: bool = False,
@@ -100,30 +100,8 @@ class ProxyService:
         max_retries = settings.MAX_RETRIES
         excluded_key_ids = []
         
-        # 首先查找匹配的 provider（在循环外查询一次）
-        from sqlalchemy import select
-        from app.models.upstream import UpstreamProvider
-        
-        # 首先尝试通过名称或类型匹配
-        provider_result = await db.execute(
-            select(UpstreamProvider).where(
-                UpstreamProvider.name.ilike(f"%{provider_name}%") |
-                (UpstreamProvider.provider_type == provider_name)
-            )
-        )
-        provider_record = provider_result.scalar_one_or_none()
-        
-        # 如果未找到，尝试通过 model_mapping 匹配
         if not provider_record:
-            all_providers_result = await db.execute(select(UpstreamProvider))
-            all_providers = all_providers_result.scalars().all()
-            for p in all_providers:
-                if p.model_mapping and actual_model in p.model_mapping:
-                    provider_record = p
-                    break
-        
-        if not provider_record:
-            yield (f"Provider not found: {provider_name}", None, None)
+            yield ("Provider not found", None, None)
             return
         
         # 应用 model_mapping 转换模型名称
@@ -296,7 +274,7 @@ class ProxyService:
             error_message = ""
             
             async for chunk, upstream_key, k_id in self._call_provider_with_retry(
-                db, provider_name, actual_model, messages, is_stream,
+                db, custom_provider, actual_model, messages, is_stream,
                 temperature=body.get("temperature"),
                 max_tokens=body.get("max_tokens")
             ):
