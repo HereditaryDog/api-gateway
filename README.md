@@ -1,6 +1,6 @@
 # 🔀 API Gateway
 
-[![Version](https://img.shields.io/badge/version-0.0.1-blue.svg)](./CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.0.2-blue.svg)](./CHANGELOG.md)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.109+-green.svg)](https://fastapi.tiangolo.com/)
 [![License](https://img.shields.io/badge/license-MIT-yellow.svg)](./LICENSE)
