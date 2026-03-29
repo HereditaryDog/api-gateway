@@ -9,6 +9,7 @@ from app.core.config import get_settings
 from app.core.database import init_db
 from app.routers import auth_router, users_router, upstream_router, usage_router, proxy_router
 from app.middleware.rate_limit import RateLimitMiddleware
+from app.__version__ import __version__, __title__, __description__
 
 settings = get_settings()
 
@@ -25,10 +26,13 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title=settings.PLATFORM_NAME,
-    description="API Gateway - 聚合多个 LLM 服务商的 API 转发平台",
-    version="1.0.0",
-    lifespan=lifespan
+    title=__title__,
+    description=__description__,
+    version=__version__,
+    lifespan=lifespan,
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json"
 )
 
 # CORS 中间件
@@ -69,10 +73,12 @@ async def serve_frontend():
 async def api_root():
     """API 根路径"""
     return {
-        "name": settings.PLATFORM_NAME,
-        "version": "1.0.0",
+        "name": __title__,
+        "version": __version__,
+        "description": __description__,
         "docs": "/docs",
-        "health": "/health"
+        "health": "/health",
+        "status": "running"
     }
 
 
