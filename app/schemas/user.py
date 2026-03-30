@@ -29,6 +29,34 @@ class UserUpdate(BaseModel):
     rate_limit: Optional[int] = None
 
 
+class ProfileUpdateRequest(BaseModel):
+    username: str = Field(..., min_length=3, max_length=50)
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+
+
+class PasswordChangeRequest(BaseModel):
+    current_password: str = Field(..., min_length=6)
+    new_password: str = Field(..., min_length=6)
+    confirm_password: str = Field(..., min_length=6)
+
+    @field_validator("new_password", "confirm_password")
+    @classmethod
+    def ensure_password_length(cls, value: str):
+        return value
+
+
+class UserApiKeyResponse(BaseModel):
+    id: str
+    name: str
+    api_key: str
+    key_preview: str
+    is_active: bool
+    group: str = "默认"
+    today_cost: float = 0.0
+    month_cost: float = 0.0
+
+
 class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 

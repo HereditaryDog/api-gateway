@@ -86,6 +86,28 @@ class UserService:
         return user
 
     @staticmethod
+    async def get_user_by_email_excluding_id(
+        db: AsyncSession,
+        email: str,
+        user_id: int,
+    ) -> Optional[User]:
+        result = await db.execute(
+            select(User).where(User.email == email, User.id != user_id)
+        )
+        return result.scalar_one_or_none()
+
+    @staticmethod
+    async def get_user_by_phone_excluding_id(
+        db: AsyncSession,
+        phone: str,
+        user_id: int,
+    ) -> Optional[User]:
+        result = await db.execute(
+            select(User).where(User.phone == phone, User.id != user_id)
+        )
+        return result.scalar_one_or_none()
+
+    @staticmethod
     async def update_user(
         db: AsyncSession,
         user: User,

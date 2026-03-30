@@ -1,13 +1,22 @@
+from datetime import datetime, timedelta, timezone
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.security import get_current_user, get_current_admin
+from app.core.security import get_current_user, get_current_admin, verify_password, get_password_hash
 from app.models.user import User
 from app.services.user_service import UserService
 from app.services.points_service import PointsService
-from app.schemas.user import UserCreate, UserResponse, UserUpdate
+from app.services.usage_service import UsageService
+from app.schemas.user import (
+    PasswordChangeRequest,
+    ProfileUpdateRequest,
+    UserApiKeyResponse,
+    UserCreate,
+    UserResponse,
+    UserUpdate,
+)
 
 router = APIRouter(prefix="/users", tags=["用户管理"])
 
@@ -37,6 +46,86 @@ async def regenerate_api_key(
     """重新生成 API Key"""
     new_key = await UserService.regenerate_api_key(db, current_user)
     return {"api_key": new_key, "message": "API Key regenerated successfully"}
+
+
+@router.get("/me/api-keys", response_model=List[UserApiKeyResponse])
+async def get_my_api_keys(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """获取当前用户的 API Key 列表（当前版本为单密钥模式）。"""
+    today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    month_start = datetime.now(timezone.utc) - timedelta(days=30)
+    today_stats = await UsageService.get_usage_stats(
+        db,
+        user_id=current_user.id,
+        start_time=today_start,
+    )
+    month_stats = await UsageService.get_usage_stats(
+        db,
+        user_id=current_user.id,
+        start_time=month_start,
+    )
+
+    api_key = current_user.api_key or ""
+    preview = f"{api_key[:16]}..." if api_key else "未生成"
+    return [
+        UserApiKeyResponse(
+            id=f"user-{current_user.id}-primary",
+            name="默认密钥",
+            api_key=api_key,
+            key_preview=preview,
+            is_active=current_user.is_active,
+            today_cost=float(today_stats.get("total_points", 0.0) or 0.0) * 0.001,
+            month_cost=float(month_stats.get("total_points", 0.0) or 0.0) * 0.001,
+        )
+    ]
+
+
+@router.put("/me/profile", response_model=UserResponse)
+async def update_my_profile(
+    payload: ProfileUpdateRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """更新当前用户资料。"""
+    existing_user = await UserService.get_user_by_username(db, payload.username)
+    if existing_user and existing_user.id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="用户名已被占用")
+
+    if payload.email:
+        existing_email = await UserService.get_user_by_email_excluding_id(db, str(payload.email), current_user.id)
+        if existing_email:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="邮箱已被占用")
+
+    if payload.phone:
+        existing_phone = await UserService.get_user_by_phone_excluding_id(db, payload.phone, current_user.id)
+        if existing_phone:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="手机号已被占用")
+
+    current_user.username = payload.username
+    current_user.email = str(payload.email) if payload.email else None
+    current_user.phone = payload.phone
+    await db.flush()
+    return current_user
+
+
+@router.post("/me/change-password")
+async def change_my_password(
+    payload: PasswordChangeRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """修改当前用户密码。"""
+    if payload.new_password != payload.confirm_password:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="两次输入的新密码不一致")
+
+    if not verify_password(payload.current_password, current_user.hashed_password):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="当前密码错误")
+
+    current_user.hashed_password = get_password_hash(payload.new_password)
+    await db.flush()
+    return {"message": "密码修改成功"}
 
 
 # ========== 积分相关接口 ==========

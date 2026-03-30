@@ -1322,7 +1322,7 @@
                                     <i class="fas fa-sync-alt"></i>
                                 </button>
                                 <button class="btn btn-success btn-sm" onclick="showCreateKeyModal()">
-                                    <i class="fas fa-plus"></i> 创建密钥
+                                    <i class="fas fa-sync-alt"></i> 重新生成密钥
                                 </button>
                             </div>
                         </div>
@@ -1909,7 +1909,31 @@
                 logout();
                 return null; 
             }
-            return res.json();
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.detail || data.message || '请求失败');
+            }
+            return data;
+        }
+
+        async function apiPut(path, body) {
+            const res = await fetch(`${API_BASE}${path}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(body)
+            });
+            if (res.status === 401) {
+                logout();
+                return null;
+            }
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.detail || data.message || '请求失败');
+            }
+            return data;
         }
 
         // 加载用户信息
@@ -2127,28 +2151,38 @@
 
         // 加载 API 密钥
         async function loadKeys() {
-            const data = await apiGet('/api/upstream/keys');
+            const data = await apiGet('/api/users/me/api-keys');
             const tbody = document.getElementById('keysTable');
+            const keyFilter = document.getElementById('usageKeyFilter');
             
             if (!data || data.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-muted);">暂无密钥</td></tr>';
+                if (keyFilter) {
+                    keyFilter.innerHTML = '<option value="">全部密钥</option>';
+                }
                 return;
+            }
+
+            if (keyFilter) {
+                keyFilter.innerHTML = '<option value="">全部密钥</option>' + data.map(k => `<option value="${k.id}">${k.name}</option>`).join('');
             }
             
             tbody.innerHTML = data.map(k => `
                 <tr>
                     <td>
-                        <span style="font-weight:500;">${k.name || '未命名'}</span>
+                        <div style="display:flex;flex-direction:column;gap:4px;">
+                            <span style="font-weight:500;">${k.name || '默认密钥'}</span>
+                            <span style="font-size:12px;color:var(--text-muted);">${k.is_active ? '可用' : '已禁用'}</span>
+                        </div>
                     </td>
                     <td>
-                        <span class="key-tag">${(k.key_preview || '****').substring(0, 20)}...</span>
+                        <span class="key-tag">${k.key_preview || '未生成'}</span>
                         <button style="margin-left:8px;background:none;border:none;color:var(--text-muted);cursor:pointer;" onclick="copyToClipboard('${k.api_key}')">
                             <i class="fas fa-copy"></i>
                         </button>
                     </td>
                     <td>
                         <span class="badge badge-info">${k.group || '默认'}</span>
-                        <span class="badge badge-success">${k.multiplier || '0.12x'}</span>
                     </td>
                     <td>
                         <div style="font-size:13px;">
@@ -2161,14 +2195,8 @@
                             <button class="header-btn" style="width:32px;height:32px;" title="使用密钥" onclick="copyToClipboard('${k.api_key}')">
                                 <i class="fas fa-copy" style="font-size:12px;"></i>
                             </button>
-                            <button class="header-btn" style="width:32px;height:32px;" title="禁用" onclick="toggleKey(${k.id})">
-                                <i class="fas fa-ban" style="font-size:12px;"></i>
-                            </button>
-                            <button class="header-btn" style="width:32px;height:32px;" title="编辑" onclick="editKey(${k.id})">
-                                <i class="fas fa-edit" style="font-size:12px;"></i>
-                            </button>
-                            <button class="header-btn" style="width:32px;height:32px;" title="删除" onclick="deleteKey(${k.id})">
-                                <i class="fas fa-trash" style="font-size:12px;color:var(--accent-red);"></i>
+                            <button class="header-btn" style="width:32px;height:32px;" title="重新生成" onclick="regeneratePrimaryApiKey()">
+                                <i class="fas fa-sync-alt" style="font-size:12px;"></i>
                             </button>
                         </div>
                     </td>
@@ -2264,20 +2292,21 @@
         }
 
         function showCreateKeyModal() {
-            alert('创建密钥功能待实现');
+            regeneratePrimaryApiKey();
         }
 
-        function toggleKey(id) {
-            alert('切换密钥状态: ' + id);
-        }
-
-        function editKey(id) {
-            alert('编辑密钥: ' + id);
-        }
-
-        function deleteKey(id) {
-            if (confirm('确定要删除这个密钥吗？')) {
-                alert('删除密钥: ' + id);
+        async function regeneratePrimaryApiKey() {
+            try {
+                if (!confirm('当前版本为单密钥模式，确认后将重新生成默认 API 密钥。旧密钥会立即失效。')) {
+                    return;
+                }
+                const data = await apiPost('/api/users/me/regenerate-api-key', {});
+                if (!data) return;
+                await loadUserInfo();
+                await loadKeys();
+                alert('默认 API 密钥已重新生成');
+            } catch (error) {
+                alert(error.message);
             }
         }
 
@@ -2287,8 +2316,40 @@
             loadUsage();
         }
 
-        function exportUsage() {
-            alert('导出 CSV 功能待实现');
+        async function exportUsage() {
+            const days = document.getElementById('usageTimeFilter')?.value || 7;
+            const logs = await apiGet(`/api/usage/logs?days=${days}&limit=200`);
+            if (!logs || logs.length === 0) {
+                alert('暂无可导出的使用记录');
+                return;
+            }
+
+            const rows = [
+                ['API密钥', '模型', '推理强度', '端点', '类型', '输入Token', '输出Token', '总Token', '费用', '时间']
+            ];
+            logs.forEach(log => {
+                rows.push([
+                    log.api_key || '',
+                    log.model || '',
+                    log.intensity || '',
+                    log.endpoint || '',
+                    log.type || '',
+                    String(log.input_tokens || 0),
+                    String(log.output_tokens || 0),
+                    String(log.total_tokens || 0),
+                    String(log.cost || 0),
+                    log.created_at || ''
+                ]);
+            });
+
+            const csv = rows.map(row => row.map(cell => `"${String(cell).replaceAll('"', '""')}"`).join(',')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `usage-${new Date().toISOString().slice(0, 10)}.csv`;
+            link.click();
+            URL.revokeObjectURL(url);
         }
 
         function redeemCode() {
@@ -2300,12 +2361,25 @@
             alert('兑换码: ' + code);
         }
 
-        function updateProfile() {
-            const username = document.getElementById('editUsername').value;
-            alert('更新用户名: ' + username);
+        async function updateProfile() {
+            try {
+                const username = document.getElementById('editUsername').value;
+                const data = await apiPut('/api/users/me/profile', {
+                    username,
+                    email: currentUser?.email || null,
+                    phone: currentUser?.phone || null
+                });
+                if (!data) return;
+                currentUser = data;
+                loadProfile();
+                loadUserInfo();
+                alert('资料已更新');
+            } catch (error) {
+                alert(error.message);
+            }
         }
 
-        function changePassword() {
+        async function changePassword() {
             const current = document.getElementById('currentPassword').value;
             const newPass = document.getElementById('newPassword').value;
             const confirm = document.getElementById('confirmPassword').value;
@@ -2322,8 +2396,21 @@
                 alert('密码至少需要 8 个字符');
                 return;
             }
-            
-            alert('修改密码功能待实现');
+            try {
+                const data = await apiPost('/api/users/me/change-password', {
+                    current_password: current,
+                    new_password: newPass,
+                    confirm_password: confirm
+                });
+                if (!data) return;
+
+                document.getElementById('currentPassword').value = '';
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmPassword').value = '';
+                alert('密码修改成功');
+            } catch (error) {
+                alert(error.message);
+            }
         }
     </script>
 </body>
