@@ -5,6 +5,40 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [2.0.1] - 2026-03-29
+
+### 🔧 修复和改进
+
+#### 配置管理
+- **修复** `Settings.from_yaml()` 优先级问题
+- 环境变量 (`DATABASE_URL`, `SECRET_KEY`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`) 现在优先于 YAML/默认值
+- 更适合 Docker 部署场景
+
+#### 启动流程
+- **新增** `bootstrap.py` 自动创建管理员账号
+- 应用启动时检查并创建默认管理员，避免 fresh deploy 登录失败
+
+#### 错误处理
+- **修复** 代理层上游错误处理逻辑
+- 统一包装上游错误，正确识别 SSE 非 2xx 和无效 JSON
+- 流式和非流式响应都能正确触发计费回滚
+
+#### 代码质量
+- **修复** `request_based.py` 缺失 `UpstreamKey` 导入
+- **清理** 前端登录页预填账号密码
+- **处理** Pydantic v2 警告
+
+#### 测试
+- **新增** `pytest.ini` 配置，异步测试正确执行 (4 passed)
+
+#### Docker
+- **优化** `Dockerfile` 和 `docker-compose.yml`
+- 默认使用 SQLite 持久化
+- 添加健康检查
+- db 和 redis 改为可选 profile
+
+---
+
 ## [2.0.0] - 2026-03-29
 
 ### 🚀 重大架构升级 - Coding Plan 支持
