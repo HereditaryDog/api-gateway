@@ -90,6 +90,20 @@ async def create_user(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Username already exists"
         )
+    if user_data.email:
+        existing_email = await UserService.get_user_by_email(db, str(user_data.email))
+        if existing_email:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already exists"
+            )
+    if user_data.phone:
+        existing_phone = await UserService.get_user_by_phone(db, user_data.phone)
+        if existing_phone:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Phone already exists"
+            )
     return await UserService.create_user(db, user_data)
 
 

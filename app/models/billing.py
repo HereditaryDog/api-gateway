@@ -9,6 +9,14 @@ from sqlalchemy.sql import func
 from app.core.database import Base
 
 
+def _ensure_utc(dt):
+    if dt is None:
+        return None
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt
+
+
 class BillingMode(str, enum.Enum):
     """计费模式"""
     TOKEN = "token"           # 按 Token 计费
@@ -121,7 +129,8 @@ class UpstreamKeyQuota(Base):
     @property
     def health_score(self) -> float:
         """健康度评分 (0-100)"""
-        if self.is_throttled and self.throttle_until and self.throttle_until > datetime.now(timezone.utc):
+        throttle_until = _ensure_utc(self.throttle_until)
+        if self.is_throttled and throttle_until and throttle_until > datetime.now(timezone.utc):
             return 0.0
         
         # 基于成功率和响应时间计算
@@ -142,19 +151,22 @@ class UpstreamKeyQuota(Base):
     def is_quota_exceeded(self) -> bool:
         """检查是否超出配额"""
         now = datetime.now(timezone.utc)
+        window_5h_reset_at = _ensure_utc(self.window_5h_reset_at)
+        window_week_reset_at = _ensure_utc(self.window_week_reset_at)
+        window_month_reset_at = _ensure_utc(self.window_month_reset_at)
         
         # 检查5小时窗口
-        if self.window_5h_reset_at and now < self.window_5h_reset_at:
+        if window_5h_reset_at and now < window_5h_reset_at:
             if self.window_5h_used >= self.window_5h_limit:
                 return True
         
         # 检查周窗口
-        if self.window_week_reset_at and now < self.window_week_reset_at:
+        if window_week_reset_at and now < window_week_reset_at:
             if self.window_week_used >= self.window_week_limit:
                 return True
         
         # 检查月窗口
-        if self.window_month_reset_at and now < self.window_month_reset_at:
+        if window_month_reset_at and now < window_month_reset_at:
             if self.window_month_used >= self.window_month_limit:
                 return True
         

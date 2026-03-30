@@ -140,6 +140,10 @@ class FailoverManager:
         if key_id not in self._circuit_breakers:
             self._circuit_breakers[key_id] = CircuitBreaker()
         return self._circuit_breakers[key_id]
+
+    def get_circuit_breaker(self, key_id: int) -> CircuitBreaker:
+        """公开熔断器访问接口。"""
+        return self._get_circuit_breaker(key_id)
     
     async def execute_with_failover(
         self,

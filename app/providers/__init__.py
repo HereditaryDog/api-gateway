@@ -1,9 +1,10 @@
-"""
-Provider 工厂模块
-"""
-from typing import Optional, Dict
+"""Provider 工具与工厂导出。"""
+from typing import Dict, Optional
+
 from app.providers.base import BaseProvider
+from app.providers.factory import ProviderFactory
 from app.providers.openai_compat import OpenAICompatProvider
+from app.providers.registry import ProviderRegistry, registry
 
 # 厂商白名单：provider 名称 → base_url
 # 安全策略：只允许访问此处登记的已知厂商地址，防止 SSRF
@@ -92,3 +93,15 @@ def normalize_model_name(model: str) -> str:
         return f"gemini/{model}"
     else:
         return f"openai/{model}"
+
+
+__all__ = [
+    "PROVIDER_BASE_URLS",
+    "ProviderFactory",
+    "ProviderRegistry",
+    "create_provider",
+    "get_provider_from_model",
+    "is_provider_allowed",
+    "normalize_model_name",
+    "registry",
+]

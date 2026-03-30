@@ -1,10 +1,11 @@
-"""
-Provider 专用适配器
-"""
+"""Provider 专用适配器导出。"""
 
-from app.providers.adapters.coding_plan import CodingPlanAdapter, CodingPlanAdapterWithFailover
+from app.providers.adapters.coding_plan import CodingPlanBaseAdapter, KimiCodeAdapter, VolcengineCodingPlanAdapter
+from app.providers.adapters.openai_compat import OpenAICompatAdapter
 
 __all__ = [
-    "CodingPlanAdapter",
-    "CodingPlanAdapterWithFailover",
+    "CodingPlanBaseAdapter",
+    "KimiCodeAdapter",
+    "OpenAICompatAdapter",
+    "VolcengineCodingPlanAdapter",
 ]

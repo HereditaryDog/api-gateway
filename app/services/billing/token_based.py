@@ -7,6 +7,7 @@ from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text, select
 
+from app.core.database import run_with_sqlite_retry
 from app.services.billing.base import BillingStrategy, BillingContext
 from app.models.user import User
 from app.models.usage import PointsLog
@@ -102,16 +103,19 @@ class TokenBasedBillingStrategy(BillingStrategy):
             raise ValueError("Database session not set")
         
         points = int(amount)
-        
-        # 原子扣减：UPDATE ... WHERE balance >= amount
-        result = await self.db.execute(
-            text(
-                "UPDATE users SET points_balance = points_balance - :points "
-                "WHERE id = :uid AND points_balance >= :points"
-            ),
-            {"points": points, "uid": user_id}
-        )
-        await self.db.commit()
+
+        async def operation():
+            result = await self.db.execute(
+                text(
+                    "UPDATE users SET points_balance = points_balance - :points "
+                    "WHERE id = :uid AND points_balance >= :points"
+                ),
+                {"points": points, "uid": user_id}
+            )
+            await self.db.commit()
+            return result
+
+        result = await run_with_sqlite_retry(operation, session=self.db)
         return result.rowcount == 1
     
     async def confirm_charge(self, user_id: int, log_id: int, actual_amount: Decimal = None):
@@ -142,12 +146,15 @@ class TokenBasedBillingStrategy(BillingStrategy):
             raise ValueError("Database session not set")
         
         points = int(amount)
-        
-        await self.db.execute(
-            text("UPDATE users SET points_balance = points_balance + :points WHERE id = :uid"),
-            {"points": points, "uid": user_id}
-        )
-        await self.db.commit()
+
+        async def operation():
+            await self.db.execute(
+                text("UPDATE users SET points_balance = points_balance + :points WHERE id = :uid"),
+                {"points": points, "uid": user_id}
+            )
+            await self.db.commit()
+
+        await run_with_sqlite_retry(operation, session=self.db)
     
     async def record_usage(
         self,

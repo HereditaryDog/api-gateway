@@ -7,6 +7,7 @@ from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text, select
 
+from app.core.database import run_with_sqlite_retry
 from app.services.billing.base import BillingStrategy
 from app.models.user import User
 from app.models.billing import RequestLog, BillingMode, ProviderBillingConfig
@@ -112,16 +113,19 @@ class RequestBasedBillingStrategy(BillingStrategy):
         # 将人民币转换为积分 (1 元 = 100 积分)
         points_needed = int(amount * Decimal("100"))
         points_needed = max(1, points_needed)  # 至少扣除 1 积分
-        
-        # 原子扣减
-        result = await self.db.execute(
-            text(
-                "UPDATE users SET points_balance = points_balance - :points "
-                "WHERE id = :uid AND points_balance >= :points"
-            ),
-            {"points": points_needed, "uid": user_id}
-        )
-        await self.db.commit()
+
+        async def operation():
+            result = await self.db.execute(
+                text(
+                    "UPDATE users SET points_balance = points_balance - :points "
+                    "WHERE id = :uid AND points_balance >= :points"
+                ),
+                {"points": points_needed, "uid": user_id}
+            )
+            await self.db.commit()
+            return result
+
+        result = await run_with_sqlite_retry(operation, session=self.db)
         return result.rowcount == 1
     
     async def confirm_charge(self, user_id: int, log_id: int, actual_amount: Decimal = None):
@@ -157,18 +161,25 @@ class RequestBasedBillingStrategy(BillingStrategy):
         
         if points_diff > 0:
             # 预扣多了，回滚差额
-            await self.db.execute(
-                text("UPDATE users SET points_balance = points_balance + :points WHERE id = :uid"),
-                {"points": points_diff, "uid": user_id}
-            )
+            async def operation():
+                await self.db.execute(
+                    text("UPDATE users SET points_balance = points_balance + :points WHERE id = :uid"),
+                    {"points": points_diff, "uid": user_id}
+                )
+                log.charge_amount = actual_amount
+                await self.db.commit()
+            await run_with_sqlite_retry(operation, session=self.db)
+            return
         elif points_diff < 0:
             # 预扣少了，需要再扣
             # 这里不应该发生，因为我们是按请求计费
             pass
-        
-        # 更新日志
-        log.charge_amount = actual_amount
-        await self.db.commit()
+
+        async def operation():
+            log.charge_amount = actual_amount
+            await self.db.commit()
+
+        await run_with_sqlite_retry(operation, session=self.db)
     
     async def rollback(self, user_id: int, amount: Decimal):
         """
@@ -183,12 +194,15 @@ class RequestBasedBillingStrategy(BillingStrategy):
         
         # 将人民币转换为积分
         points = int(amount * Decimal("100"))
-        
-        await self.db.execute(
-            text("UPDATE users SET points_balance = points_balance + :points WHERE id = :uid"),
-            {"points": points, "uid": user_id}
-        )
-        await self.db.commit()
+
+        async def operation():
+            await self.db.execute(
+                text("UPDATE users SET points_balance = points_balance + :points WHERE id = :uid"),
+                {"points": points, "uid": user_id}
+            )
+            await self.db.commit()
+
+        await run_with_sqlite_retry(operation, session=self.db)
     
     async def record_usage(
         self,

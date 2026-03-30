@@ -21,6 +21,7 @@ from sqlalchemy import text, select
 from app.models.user import User
 from app.models.usage import PointsLog
 from app.core.config import get_settings
+from app.core.database import run_with_sqlite_retry
 
 settings = get_settings()
 
@@ -94,14 +95,17 @@ class PointsService:
             True 表示扣减成功，False 表示余额不足
         """
         # 原子扣减：UPDATE ... WHERE balance >= amount
-        result = await db.execute(
-            text(
-                "UPDATE users SET points_balance = points_balance - :points "
-                "WHERE id = :uid AND points_balance >= :points"
-            ),
-            {"points": points, "uid": user_id}
-        )
-        await db.commit()
+        async def operation():
+            result = await db.execute(
+                text(
+                    "UPDATE users SET points_balance = points_balance - :points "
+                    "WHERE id = :uid AND points_balance >= :points"
+                ),
+                {"points": points, "uid": user_id}
+            )
+            await db.commit()
+            return result
+        result = await run_with_sqlite_retry(operation, session=db)
         return result.rowcount == 1
 
     @staticmethod
@@ -114,11 +118,13 @@ class PointsService:
             user_id: 用户 ID
             points: 要回滚的积分数
         """
-        await db.execute(
-            text("UPDATE users SET points_balance = points_balance + :points WHERE id = :uid"),
-            {"points": points, "uid": user_id}
-        )
-        await db.commit()
+        async def operation():
+            await db.execute(
+                text("UPDATE users SET points_balance = points_balance + :points WHERE id = :uid"),
+                {"points": points, "uid": user_id}
+            )
+            await db.commit()
+        await run_with_sqlite_retry(operation, session=db)
 
     @staticmethod
     async def confirm_deduct(
@@ -151,8 +157,10 @@ class PointsService:
             model=model,
             remark=remark,
         )
-        db.add(log)
-        await db.commit()
+        async def operation():
+            db.add(log)
+            await db.commit()
+        await run_with_sqlite_retry(operation, session=db)
 
     @staticmethod
     async def add_points(
@@ -177,22 +185,24 @@ class PointsService:
             remark: 备注
         """
         # 增加积分
-        await db.execute(
-            text("UPDATE users SET points_balance = points_balance + :points WHERE id = :uid"),
-            {"points": points, "uid": user_id}
-        )
-        
-        # 写积分日志
-        log = PointsLog(
-            user_id=user_id,
-            amount=points,  # 增加为正
-            log_type=log_type,
-            related_log_id=related_log_id,
-            model=model,
-            remark=remark,
-        )
-        db.add(log)
-        await db.commit()
+        async def operation():
+            await db.execute(
+                text("UPDATE users SET points_balance = points_balance + :points WHERE id = :uid"),
+                {"points": points, "uid": user_id}
+            )
+            
+            # 写积分日志
+            log = PointsLog(
+                user_id=user_id,
+                amount=points,  # 增加为正
+                log_type=log_type,
+                related_log_id=related_log_id,
+                model=model,
+                remark=remark,
+            )
+            db.add(log)
+            await db.commit()
+        await run_with_sqlite_retry(operation, session=db)
 
     @staticmethod
     async def get_logs(

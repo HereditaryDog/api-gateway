@@ -332,6 +332,65 @@
         .view { display: none; }
         .view.active { display: block; }
         .hidden { display: none !important; }
+
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 14, 26, 0.72);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 24px;
+        }
+        .modal-backdrop.active { display: flex; }
+        .modal-panel {
+            width: 100%;
+            max-width: 560px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+        }
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .modal-header h3 { font-size: 18px; font-weight: 700; }
+        .modal-close {
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 18px;
+            cursor: pointer;
+        }
+        .modal-body { padding: 24px; }
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding: 0 24px 24px;
+        }
+        .modal-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+        .modal-grid .form-group { margin-bottom: 0; }
+        .modal-grid .full-width { grid-column: 1 / -1; }
+        .form-control.no-icon { padding-left: 16px; }
+        .inline-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        @media (max-width: 768px) {
+            .modal-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
@@ -342,7 +401,7 @@
                 <i class="fas fa-network-wired"></i>
                 <div>
                     <h1>API Gateway</h1>
-                    <p>智能 API 转发运维平台</p>
+                    <p>智能API转发平台</p>
                 </div>
             </div>
             <div id="loginError" class="alert alert-error"></div>
@@ -501,7 +560,7 @@
                         <h1>Key 池管理</h1>
                         <p>管理所有上游 API Keys</p>
                     </div>
-                    <button class="btn btn-success btn-sm" onclick="alert('添加 Key 功能待实现')">
+                    <button class="btn btn-success btn-sm" onclick="openKeyModal()">
                         <i class="fas fa-plus"></i> 添加 Key
                     </button>
                 </div>
@@ -530,9 +589,9 @@
                 <div class="page-header">
                     <div class="page-title">
                         <h1>用户管理</h1>
-                        <p>管理用户账号和积分</p>
+                        <p>管理用户账号、积分和邀请码</p>
                     </div>
-                    <button class="btn btn-success btn-sm" onclick="alert('添加用户功能待实现')">
+                    <button class="btn btn-success btn-sm" onclick="openUserModal()">
                         <i class="fas fa-plus"></i> 添加用户
                     </button>
                 </div>
@@ -550,6 +609,51 @@
                             </thead>
                             <tbody id="usersTable">
                                 <tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-muted);">加载中...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card" style="margin-top:20px;">
+                    <div class="card-header">
+                        <span class="card-title">注册邀请码</span>
+                    </div>
+                    <div class="card-body">
+                        <div style="display:grid;grid-template-columns:140px 140px 1fr auto;gap:12px;align-items:end;">
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label>生成数量</label>
+                                <input type="number" id="inviteQuantity" class="form-control" value="5" min="1" max="100" style="padding-left:16px;">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label>有效天数</label>
+                                <input type="number" id="inviteExpiresDays" class="form-control" value="7" min="1" max="365" style="padding-left:16px;">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label>备注</label>
+                                <input type="text" id="inviteRemark" class="form-control" placeholder="例如：首批测试用户" style="padding-left:16px;">
+                            </div>
+                            <button class="btn btn-success btn-sm" onclick="generateInviteCodes()">
+                                <i class="fas fa-ticket-alt"></i> 生成邀请码
+                            </button>
+                        </div>
+                        <div id="inviteCodesHint" style="display:none;margin-top:16px;padding:12px;border-radius:8px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);color:#a7f3d0;font-size:13px;"></div>
+                    </div>
+                </div>
+                <div class="card" style="margin-top:20px;">
+                    <div class="card-header">
+                        <span class="card-title">邀请码列表</span>
+                    </div>
+                    <div class="card-body" style="padding: 0;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>邀请码</th>
+                                    <th>状态</th>
+                                    <th>有效期</th>
+                                    <th>备注</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inviteCodesTable">
+                                <tr><td colspan="4" style="text-align:center;padding:40px;color:var(--text-muted);">暂无邀请码</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -589,11 +693,157 @@
         </main>
     </div>
 
+    <div id="keyModal" class="modal-backdrop">
+        <div class="modal-panel">
+            <div class="modal-header">
+                <h3>添加上游 Key</h3>
+                <button class="modal-close" onclick="closeModal('keyModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="keyModalError" class="alert alert-error"></div>
+                <div class="modal-grid">
+                    <div class="form-group">
+                        <label>Provider</label>
+                        <select id="keyProviderId" class="form-control no-icon"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>备注</label>
+                        <input type="text" id="keyRemark" class="form-control no-icon" placeholder="例如：生产池 Key">
+                    </div>
+                    <div class="form-group full-width">
+                        <label>API Key</label>
+                        <input type="text" id="keyApiKey" class="form-control no-icon" placeholder="请输入上游 API Key">
+                    </div>
+                    <div class="form-group">
+                        <label>优先级</label>
+                        <input type="number" id="keyPriority" class="form-control no-icon" value="100" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>权重</label>
+                        <input type="number" id="keyWeight" class="form-control no-icon" value="100" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label>RPM</label>
+                        <input type="number" id="keyRpm" class="form-control no-icon" value="60" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label>TPM</label>
+                        <input type="number" id="keyTpm" class="form-control no-icon" value="100000" min="1">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary btn-sm" onclick="closeModal('keyModal')">取消</button>
+                <button class="btn btn-success btn-sm" onclick="submitKeyModal()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="userModal" class="modal-backdrop">
+        <div class="modal-panel">
+            <div class="modal-header">
+                <h3>添加用户</h3>
+                <button class="modal-close" onclick="closeModal('userModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="userModalError" class="alert alert-error"></div>
+                <div class="modal-grid">
+                    <div class="form-group">
+                        <label>用户名</label>
+                        <input type="text" id="newUserUsername" class="form-control no-icon" placeholder="请输入用户名">
+                    </div>
+                    <div class="form-group">
+                        <label>邮箱</label>
+                        <input type="email" id="newUserEmail" class="form-control no-icon" placeholder="请输入邮箱">
+                    </div>
+                    <div class="form-group">
+                        <label>手机号</label>
+                        <input type="text" id="newUserPhone" class="form-control no-icon" placeholder="请输入手机号">
+                    </div>
+                    <div class="form-group">
+                        <label>初始密码</label>
+                        <input type="password" id="newUserPassword" class="form-control no-icon" placeholder="请输入密码">
+                    </div>
+                    <div class="form-group">
+                        <label>初始额度</label>
+                        <input type="number" id="newUserQuota" class="form-control no-icon" value="0" min="0">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary btn-sm" onclick="closeModal('userModal')">取消</button>
+                <button class="btn btn-success btn-sm" onclick="submitUserModal()">创建</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="rechargeModal" class="modal-backdrop">
+        <div class="modal-panel">
+            <div class="modal-header">
+                <h3>用户充值</h3>
+                <button class="modal-close" onclick="closeModal('rechargeModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="rechargeModalError" class="alert alert-error"></div>
+                <div class="form-group">
+                    <label>用户</label>
+                    <input type="text" id="rechargeTargetUser" class="form-control no-icon" readonly>
+                </div>
+                <div class="modal-grid">
+                    <div class="form-group">
+                        <label>充值积分</label>
+                        <input type="number" id="rechargePoints" class="form-control no-icon" value="100" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label>备注</label>
+                        <input type="text" id="rechargeRemark" class="form-control no-icon" placeholder="例如：人工补偿">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary btn-sm" onclick="closeModal('rechargeModal')">取消</button>
+                <button class="btn btn-success btn-sm" onclick="submitRecharge()">充值</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const API_BASE = window.location.origin;
         let token = localStorage.getItem('token');
+        let providers = [];
+        let selectedRechargeUser = null;
 
         if (token) showApp();
+
+        async function ensureProvidersLoaded() {
+            if (providers.length > 0) return providers;
+            providers = await apiGet('/api/upstream/providers') || [];
+            return providers;
+        }
+
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+            const errorId = {
+                keyModal: 'keyModalError',
+                userModal: 'userModalError',
+                rechargeModal: 'rechargeModalError'
+            }[id];
+            if (errorId) {
+                const el = document.getElementById(errorId);
+                el.style.display = 'none';
+                el.textContent = '';
+            }
+        }
+
+        function showModalError(id, message) {
+            const el = document.getElementById(id);
+            el.textContent = message;
+            el.style.display = 'block';
+        }
 
         function showApp() {
             document.getElementById('loginPage').classList.add('hidden');
@@ -648,7 +898,10 @@
             // 加载数据
             if (viewName === 'dashboard') loadDashboard();
             if (viewName === 'keys') loadKeys();
-            if (viewName === 'users') loadUsers();
+            if (viewName === 'users') {
+                loadUsers();
+                loadInviteCodes();
+            }
         }
 
         async function apiGet(path) {
@@ -660,11 +913,64 @@
                 location.reload();
                 return null; 
             }
-            return res.json();
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.detail || '请求失败');
+            }
+            return data;
+        }
+
+        async function apiPost(path, body) {
+            const res = await fetch(`${API_BASE}${path}`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(body)
+            });
+            const data = await res.json();
+            if (res.status === 401) {
+                localStorage.removeItem('token');
+                location.reload();
+                return null;
+            }
+            if (!res.ok) {
+                throw new Error(data.detail || '请求失败');
+            }
+            return data;
+        }
+
+        function openUserModal() {
+            openModal('userModal');
+        }
+
+        async function openKeyModal() {
+            try {
+                await ensureProvidersLoaded();
+                const select = document.getElementById('keyProviderId');
+                select.innerHTML = providers.map(provider => `<option value="${provider.id}">${provider.name}</option>`).join('');
+                openModal('keyModal');
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        function openRechargeModal(user) {
+            selectedRechargeUser = user;
+            document.getElementById('rechargeTargetUser').value = `${user.username}${user.email ? ` (${user.email})` : ''}`;
+            document.getElementById('rechargePoints').value = 100;
+            document.getElementById('rechargeRemark').value = '';
+            openModal('rechargeModal');
         }
 
         async function loadDashboard() {
-            const data = await apiGet('/api/usage/dashboard');
+            let data;
+            try {
+                data = await apiGet('/api/usage/dashboard');
+            } catch (error) {
+                return;
+            }
             if (!data) return;
             document.getElementById('statRequests').textContent = (data.today_requests || 0).toLocaleString();
             document.getElementById('statActiveKeys').textContent = data.active_upstream_keys || 0;
@@ -673,25 +979,54 @@
         }
 
         async function loadKeys() {
-            const data = await apiGet('/api/upstream/keys');
+            try {
+                await ensureProvidersLoaded();
+            } catch (error) {
+                document.getElementById('keysTable').innerHTML = `<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--accent-red);">${error.message}</td></tr>`;
+                return;
+            }
+            let data;
+            try {
+                data = await apiGet('/api/upstream/keys');
+            } catch (error) {
+                document.getElementById('keysTable').innerHTML = `<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--accent-red);">${error.message}</td></tr>`;
+                return;
+            }
             const tbody = document.getElementById('keysTable');
             if (!data || data.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-muted);">暂无数据，请添加 Key</td></tr>';
                 return;
             }
+            const providerMap = new Map(providers.map(provider => [provider.id, provider]));
             tbody.innerHTML = data.map(k => `
                 <tr>
-                    <td><span class="badge badge-info">Provider ${k.provider_id}</span></td>
+                    <td>
+                        <div style="display:flex;flex-direction:column;gap:4px;">
+                            <span class="badge badge-info">${providerMap.get(k.provider_id)?.name || `Provider ${k.provider_id}`}</span>
+                            <span style="font-size:12px;color:var(--text-muted);">优先级 ${k.priority} · 权重 ${k.weight}</span>
+                        </div>
+                    </td>
                     <td><span class="key-tag">${(k.encrypted_key || '****').substring(0, 20)}...</span></td>
                     <td>${(k.total_requests || 0).toLocaleString()}</td>
                     <td>${k.is_active ? '<span class="badge badge-success">正常</span>' : '<span class="badge">禁用</span>'}</td>
-                    <td><button class="btn btn-secondary btn-sm">管理</button></td>
+                    <td>
+                        <div class="inline-actions">
+                            <button class="btn btn-secondary btn-sm" onclick="toggleKey(${k.id})">${k.is_active ? '停用' : '启用'}</button>
+                            <button class="btn btn-secondary btn-sm" onclick="loadKeys()">刷新</button>
+                        </div>
+                    </td>
                 </tr>
             `).join('');
         }
 
         async function loadUsers() {
-            const data = await apiGet('/api/users/');
+            let data;
+            try {
+                data = await apiGet('/api/users/');
+            } catch (error) {
+                document.getElementById('usersTable').innerHTML = `<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--accent-red);">${error.message}</td></tr>`;
+                return;
+            }
             const tbody = document.getElementById('usersTable');
             if (!data || data.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-muted);">暂无用户</td></tr>';
@@ -702,15 +1037,152 @@
                     <td>
                         <div style="display:flex;align-items:center;gap:12px;">
                             <div class="user-avatar" style="width:32px;height:32px;font-size:12px;">${(u.username || 'U')[0].toUpperCase()}</div>
-                            <span style="font-weight:500;">${u.username}</span>
-                        </div>
-                    </td>
+                                <div>
+                                    <div style="font-weight:500;">${u.username}</div>
+                                    <div style="font-size:12px;color:var(--text-muted);">${u.email || '未填写邮箱'}${u.phone ? ` · ${u.phone}` : ''}</div>
+                                </div>
+                            </div>
+                        </td>
                     <td><span class="key-tag">${(u.api_key || '').substring(0, 16)}...</span></td>
                     <td><span style="color:var(--accent-green);font-weight:600;">${Math.floor(u.points_balance || 0)}</span></td>
                     <td>${u.is_active ? '<span class="badge badge-success">正常</span>' : '<span class="badge">禁用</span>'}</td>
-                    <td><button class="btn btn-success btn-sm">充值</button></td>
+                    <td><button class="btn btn-success btn-sm" onclick='openRechargeModal(${JSON.stringify(u)})'>充值</button></td>
                 </tr>
             `).join('');
+        }
+
+        async function loadInviteCodes() {
+            let data;
+            try {
+                data = await apiGet('/api/admin/invite-codes');
+            } catch (error) {
+                document.getElementById('inviteCodesTable').innerHTML = `<tr><td colspan="4" style="text-align:center;padding:40px;color:var(--accent-red);">${error.message}</td></tr>`;
+                return;
+            }
+            const tbody = document.getElementById('inviteCodesTable');
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:40px;color:var(--text-muted);">暂无邀请码</td></tr>';
+                return;
+            }
+            tbody.innerHTML = data.map(code => `
+                <tr>
+                    <td><span class="key-tag">${code.code}</span></td>
+                    <td>${code.used_by_user_id ? '<span class="badge">已使用</span>' : (code.is_active ? '<span class="badge badge-success">可用</span>' : '<span class="badge">失效</span>')}</td>
+                    <td>${code.expires_at ? new Date(code.expires_at).toLocaleString() : '长期有效'}</td>
+                    <td>${code.remark || '-'}</td>
+                </tr>
+            `).join('');
+        }
+
+        async function generateInviteCodes() {
+            const quantity = Number(document.getElementById('inviteQuantity').value || '1');
+            const expiresInDays = Number(document.getElementById('inviteExpiresDays').value || '7');
+            const remark = document.getElementById('inviteRemark').value.trim();
+            const hint = document.getElementById('inviteCodesHint');
+
+            const res = await fetch(`${API_BASE}/api/admin/invite-codes`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    quantity,
+                    expires_in_days: expiresInDays,
+                    remark
+                })
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                alert(data.detail || '邀请码生成失败');
+                return;
+            }
+
+            hint.style.display = 'block';
+            hint.innerHTML = `已生成邀请码：${data.codes.map(item => `<span class="key-tag" style="margin-right:8px;">${item.code}</span>`).join('')}`;
+            loadInviteCodes();
+        }
+
+        async function submitKeyModal() {
+            try {
+                await apiPost('/api/upstream/keys', {
+                    provider_id: Number(document.getElementById('keyProviderId').value),
+                    api_key: document.getElementById('keyApiKey').value.trim(),
+                    priority: Number(document.getElementById('keyPriority').value || '100'),
+                    weight: Number(document.getElementById('keyWeight').value || '100'),
+                    rpm_limit: Number(document.getElementById('keyRpm').value || '60'),
+                    tpm_limit: Number(document.getElementById('keyTpm').value || '100000'),
+                    remark: document.getElementById('keyRemark').value.trim() || null
+                });
+                document.getElementById('keyApiKey').value = '';
+                document.getElementById('keyRemark').value = '';
+                closeModal('keyModal');
+                await loadKeys();
+            } catch (error) {
+                showModalError('keyModalError', error.message);
+            }
+        }
+
+        async function submitUserModal() {
+            try {
+                await apiPost('/api/users/', {
+                    username: document.getElementById('newUserUsername').value.trim(),
+                    email: document.getElementById('newUserEmail').value.trim() || null,
+                    phone: document.getElementById('newUserPhone').value.trim() || null,
+                    password: document.getElementById('newUserPassword').value,
+                    total_quota: Number(document.getElementById('newUserQuota').value || '0'),
+                    is_admin: false
+                });
+                document.getElementById('newUserUsername').value = '';
+                document.getElementById('newUserEmail').value = '';
+                document.getElementById('newUserPhone').value = '';
+                document.getElementById('newUserPassword').value = '';
+                document.getElementById('newUserQuota').value = '0';
+                closeModal('userModal');
+                await loadUsers();
+            } catch (error) {
+                showModalError('userModalError', error.message);
+            }
+        }
+
+        async function submitRecharge() {
+            if (!selectedRechargeUser) return;
+            try {
+                const points = Number(document.getElementById('rechargePoints').value || '0');
+                const remark = document.getElementById('rechargeRemark').value.trim();
+                const query = new URLSearchParams({
+                    points: String(points),
+                    remark
+                });
+                const res = await fetch(`${API_BASE}/api/users/${selectedRechargeUser.id}/add-points?${query.toString()}`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    throw new Error(data.detail || '充值失败');
+                }
+                closeModal('rechargeModal');
+                await loadUsers();
+            } catch (error) {
+                showModalError('rechargeModalError', error.message);
+            }
+        }
+
+        async function toggleKey(keyId) {
+            try {
+                const res = await fetch(`${API_BASE}/api/upstream/keys/${keyId}/toggle`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    throw new Error(data.detail || '切换失败');
+                }
+                await loadKeys();
+            } catch (error) {
+                alert(error.message);
+            }
         }
     </script>
 </body>

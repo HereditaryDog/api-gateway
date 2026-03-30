@@ -8,8 +8,8 @@ import os
 from app.core.config import get_settings
 from app.core.bootstrap import ensure_admin_user
 from app.core.database import init_db
-from app.routers import auth_router, users_router, upstream_router, usage_router, proxy_router
-from app.middleware.rate_limit import RateLimitMiddleware
+from app.routers import auth_router, users_router, upstream_router, usage_router, proxy_router, risk_admin_router, invite_admin_router
+from app.middleware.gateway_risk import GatewayRiskMiddleware
 from app.__version__ import __version__, __title__, __description__
 
 settings = get_settings()
@@ -48,14 +48,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 速率限制中间件
-app.add_middleware(RateLimitMiddleware, requests_per_minute=120)
+# 全站风控中间件
+app.add_middleware(GatewayRiskMiddleware)
 
 # 注册路由
 app.include_router(auth_router, prefix="/api")
 app.include_router(users_router, prefix="/api")
 app.include_router(upstream_router, prefix="/api")
 app.include_router(usage_router, prefix="/api")
+app.include_router(risk_admin_router, prefix="/api")
+app.include_router(invite_admin_router, prefix="/api")
 app.include_router(proxy_router)  # OpenAI 兼容接口，不需要 /api 前缀
 
 # 挂载静态文件

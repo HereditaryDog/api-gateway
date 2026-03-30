@@ -19,6 +19,10 @@ from app.services.risk_control.failover import (
     CircuitBreaker,
     get_failover_manager
 )
+from app.services.risk_control.identity import RequestIdentityResolver, ResolvedIdentity
+from app.services.risk_control.limiter import SlidingWindowLimiter, TokenBucketLimiter
+from app.services.risk_control.policy import RiskPolicy
+from app.services.risk_control.sensitive_words import SensitiveWordsService, get_sensitive_words_service
 
 __all__ = [
     # 多账号池管理
@@ -45,4 +49,13 @@ __all__ = [
     "FailoverStrategy",
     "CircuitBreaker",
     "get_failover_manager",
+
+    # 网关风控
+    "RequestIdentityResolver",
+    "ResolvedIdentity",
+    "RiskPolicy",
+    "SensitiveWordsService",
+    "SlidingWindowLimiter",
+    "TokenBucketLimiter",
+    "get_sensitive_words_service",
 ]

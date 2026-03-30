@@ -1,92 +1,38 @@
 """
 API 请求转发服务 V2
-支持多种计费模式和 Coding Plan 风控
+支持统一 Provider 接入、Coding Plan 适配器和网关风控。
 """
-import time
+from __future__ import annotations
+
 import json
+import time
 import uuid
-from typing import AsyncGenerator, Dict, Any, Optional
 from decimal import Decimal
+from typing import Any, Dict, Optional
+
 from fastapi import HTTPException, Request
 from fastapi.responses import StreamingResponse
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.user import User
-from app.models.upstream import UpstreamKey, UpstreamProvider
-from app.services.upstream_service import UpstreamService
-from app.services.billing import (
-    BillingStrategyFactory,
-    BillingContext,
-    TokenBasedBillingStrategy,
-    RequestBasedBillingStrategy,
-)
-from app.services.billing.base import BillingContext
-from app.providers import (
-    get_provider_from_model,
-    is_provider_allowed,
-    create_provider,
-    normalize_model_name,
-    OpenAICompatProvider,
-)
-from app.providers.adapters import CodingPlanAdapter, CodingPlanAdapterWithFailover
 from app.core.config import get_settings
+from app.models.upstream import UpstreamProvider
+from app.models.user import User
+from app.providers import ProviderFactory, get_provider_from_model, normalize_model_name
+from app.providers.contracts import ChatRequest, ProviderError
+from app.services.billing import BillingContext, BillingStrategyFactory, TokenBasedBillingStrategy
 
 settings = get_settings()
 
 
 class ProxyServiceV2:
-    """
-    API 请求转发服务 V2
-    
-    新特性:
-    1. 支持多种计费模式 (Token/Request)
-    2. Coding Plan 专用适配器
-    3. 集成风控系统
-    4. 更精确的计费
-    """
-
     def __init__(self):
-        self._init_models()
-
-    def _init_models(self):
-        """初始化支持的模型列表"""
-        self.SUPPORTED_MODELS = [
-            # OpenAI
-            "openai/gpt-4",
-            "openai/gpt-4-turbo",
-            "openai/gpt-4o",
-            "openai/gpt-4o-mini",
-            "openai/gpt-3.5-turbo",
-            # Anthropic
-            "anthropic/claude-3-opus",
-            "anthropic/claude-3-sonnet",
-            "anthropic/claude-3-haiku",
-            # DeepSeek
-            "deepseek/deepseek-chat",
-            "deepseek/deepseek-coder",
-            "deepseek/deepseek-reasoner",
-            # Gemini
-            "gemini/gemini-pro",
-            "gemini/gemini-flash",
-            # Coding Plan (示例)
-            "coding-plan/gpt-4",
-            "coding-plan/gpt-3.5-turbo",
-            # 兼容旧格式
-            "gpt-4",
-            "gpt-3.5-turbo",
-            "claude-3-opus",
-            "deepseek-chat",
-            # 火山引擎 (Volcengine)
-            "volcengine/doubao-lite",
-            "volcengine/doubao-pro",
-        ]
+        self.provider_factory = ProviderFactory()
 
     def _get_request_id(self) -> str:
-        """生成请求 ID"""
         return f"req-{uuid.uuid4().hex[:16]}"
 
     def _estimate_tokens(self, messages: list) -> int:
-        """估算 token 数量"""
         if not messages:
             return 0
 
@@ -99,417 +45,181 @@ class ProxyServiceV2:
                 for item in content:
                     if isinstance(item, dict):
                         text = item.get("text", "")
-                        total_chars += len(text)
-
+                        if isinstance(text, str):
+                            total_chars += len(text)
         return max(1, total_chars // 4)
-
-    def _error_payload(
-        self,
-        message: str,
-        stream: bool = False,
-        error_type: str = "upstream_error",
-        code: int = 502
-    ) -> str:
-        payload = json.dumps(
-            {
-                "error": {
-                    "message": message,
-                    "type": error_type,
-                    "code": code,
-                }
-            },
-            ensure_ascii=False,
-        )
-        if stream:
-            return f"data: {payload}\n\n"
-        return payload
 
     async def _get_provider_record(
         self,
         db: AsyncSession,
         provider_name: str,
-        actual_model: str
+        actual_model: str,
+        external_model: Optional[str] = None,
     ) -> Optional[UpstreamProvider]:
-        """
-        获取 Provider 记录
-        
-        查找逻辑:
-        1. 通过 model_mapping 查找
-        2. 通过 provider_type 查找
-        3. 通过名称查找
-        """
-        from sqlalchemy import select
+        result = await db.execute(
+            select(UpstreamProvider)
+            .where(UpstreamProvider.is_active == True)
+            .order_by(UpstreamProvider.priority.asc(), UpstreamProvider.id.asc())
+        )
+        providers = result.scalars().all()
 
-        # 获取所有自定义 provider
-        result = await db.execute(select(UpstreamProvider))
-        all_providers = result.scalars().all()
+        if external_model:
+            for provider in providers:
+                if provider.model_mapping and external_model in provider.model_mapping:
+                    return provider
 
-        # 先通过 model_mapping 查找
-        for p in all_providers:
-            if p.model_mapping and actual_model in p.model_mapping:
-                return p
-            # 检查反向映射
-            if p.model_mapping:
-                for mapped_key, mapped_value in p.model_mapping.items():
-                    if mapped_value == actual_model or actual_model in mapped_value:
-                        return p
+        for provider in providers:
+            if provider.model_mapping and actual_model in provider.model_mapping:
+                return provider
 
-        # 通过 provider_type 查找
-        for p in all_providers:
-            if p.provider_type and p.provider_type.value == provider_name:
-                return p
+        for provider in providers:
+            if provider.model_mapping:
+                for mapped_key, mapped_value in provider.model_mapping.items():
+                    if mapped_value == actual_model or actual_model in str(mapped_value):
+                        return provider
 
-        # 通过名称查找
-        for p in all_providers:
-            if provider_name.lower() in p.name.lower():
-                return p
+        for provider in providers:
+            if provider.provider_type and provider.provider_type.value == provider_name:
+                return provider
+
+        for provider in providers:
+            if provider_name.lower() in provider.name.lower():
+                return provider
 
         return None
 
-    async def _create_provider_instance(
-        self,
-        db: AsyncSession,
-        provider_record: UpstreamProvider,
-        actual_model: str
-    ):
-        """
-        创建 Provider 实例
-        
-        根据 adapter_type 选择不同的适配器
-        """
-        adapter_type = provider_record.adapter_type or "standard"
-
-        if adapter_type == "coding_plan":
-            # 使用 Coding Plan 专用适配器
-            return CodingPlanAdapter(
-                db=db,
-                provider_id=provider_record.id,
-                provider_name=provider_record.provider_type.value if provider_record.provider_type else "coding_plan",
-                base_url=provider_record.base_url,
-            )
-        elif adapter_type == "coding_plan_with_failover":
-            return CodingPlanAdapterWithFailover(
-                db=db,
-                provider_id=provider_record.id,
-                provider_name=provider_record.provider_type.value if provider_record.provider_type else "coding_plan",
-                base_url=provider_record.base_url,
-            )
+    def _provider_error_payload(self, exc: Exception) -> bytes:
+        if isinstance(exc, ProviderError):
+            payload = exc.to_payload()
         else:
-            # 标准适配器（需要获取 API Key）
-            keys = await UpstreamService.list_keys(
-                db,
-                provider_id=provider_record.id,
-                available_only=True,
-                limit=1
-            )
-
-            if not keys:
-                return None
-
-            from app.core.encryption import decrypt_data
-            decrypted_key = decrypt_data(keys[0].encrypted_key)
-
-            if not decrypted_key:
-                return None
-
-            return OpenAICompatProvider(
-                api_key=decrypted_key,
-                base_url=provider_record.base_url
-            )
-
-    async def _call_provider_with_retry(
-        self,
-        db: AsyncSession,
-        provider_record: UpstreamProvider,
-        actual_model: str,
-        messages: list,
-        stream: bool = False,
-        **kwargs
-    ) -> AsyncGenerator[tuple[str, Optional[UpstreamKey], int], None]:
-        """
-        调用厂商 API，支持失败重试
-        """
-        max_retries = settings.MAX_RETRIES
-        excluded_key_ids = []
-
-        if not provider_record:
-            yield (self._error_payload("Provider not found", stream=stream, code=400), None, None)
-            return
-
-        # 应用 model_mapping 转换模型名称
-        mapped_model = provider_record.model_mapping.get(actual_model, actual_model) if provider_record.model_mapping else actual_model
-
-        for attempt in range(max_retries):
-            try:
-                # 创建 provider 实例
-                provider = await self._create_provider_instance(
-                    db, provider_record, actual_model
-                )
-
-                if not provider:
-                    yield (
-                        self._error_payload(
-                            "No available upstream key for this provider",
-                            stream=stream,
-                        ),
-                        None,
-                        None,
-                    )
-                    return
-
-                # 对于 Coding Plan 适配器，不需要额外处理 key
-                if isinstance(provider, (CodingPlanAdapter, CodingPlanAdapterWithFailover)):
-                    if stream:
-                        total_tokens = 0
-                        async for chunk in provider.chat_completion_stream(
-                            model=mapped_model,
-                            messages=messages,
-                            temperature=kwargs.get("temperature", 0.7),
-                            max_tokens=kwargs.get("max_tokens", 2000)
-                        ):
-                            yield (chunk, None, None)
-                            # 估算 token
-                            if chunk.startswith("data: "):
-                                try:
-                                    data = json.loads(chunk[6:])
-                                    if "choices" in data and len(data["choices"]) > 0:
-                                        delta = data["choices"][0].get("delta", {})
-                                        if delta.get("content"):
-                                            total_tokens += len(delta["content"]) // 4
-                                except:
-                                    pass
-                        return
-                    else:
-                        response = await provider.chat_completion(
-                            model=mapped_model,
-                            messages=messages,
-                            temperature=kwargs.get("temperature", 0.7),
-                            max_tokens=kwargs.get("max_tokens", 2000)
-                        )
-                        usage = response.get("usage", {})
-                        total_tokens = usage.get("total_tokens", 0)
-                        yield (json.dumps(response), None, None)
-                        return
-                else:
-                    # 标准适配器处理
-                    if stream:
-                        total_tokens = 0
-                        async for chunk in provider.chat_completion_stream(
-                            model=mapped_model,
-                            messages=messages,
-                            temperature=kwargs.get("temperature", 0.7),
-                            max_tokens=kwargs.get("max_tokens", 2000)
-                        ):
-                            yield (chunk, None, None)
-                            if chunk.startswith("data: "):
-                                try:
-                                    data = json.loads(chunk[6:])
-                                    if "choices" in data and len(data["choices"]) > 0:
-                                        delta = data["choices"][0].get("delta", {})
-                                        if delta.get("content"):
-                                            total_tokens += len(delta["content"]) // 4
-                                except:
-                                    pass
-                        return
-                    else:
-                        response = await provider.chat_completion(
-                            model=mapped_model,
-                            messages=messages,
-                            temperature=kwargs.get("temperature", 0.7),
-                            max_tokens=kwargs.get("max_tokens", 2000)
-                        )
-                        usage = response.get("usage", {})
-                        total_tokens = usage.get("total_tokens", 0)
-                        yield (json.dumps(response), None, None)
-                        return
-
-            except Exception as e:
-                if attempt < max_retries - 1:
-                    continue
-                else:
-                    yield (
-                        self._error_payload(
-                            f"All upstream keys failed: {str(e)}",
-                            stream=stream,
-                        ),
-                        None,
-                        None,
-                    )
-                    return
+            payload = {
+                "error": {
+                    "message": str(exc),
+                    "type": "internal_error",
+                    "code": 500,
+                }
+            }
+        return json.dumps(payload, ensure_ascii=False).encode()
 
     async def chat_completions(
         self,
         db: AsyncSession,
         user: User,
         request: Request,
-        body: Dict[str, Any]
+        body: Dict[str, Any],
     ) -> StreamingResponse:
-        """
-        处理聊天完成请求
-
-        流程:
-        1. 规范化模型名称
-        2. 获取计费策略
-        3. 预扣费
-        4. 转发请求到上游
-        5. 确认扣费或回滚
-        """
         request_id = self._get_request_id()
         start_time = time.time()
 
-        # 创建计费上下文
         billing_ctx = BillingContext()
         billing_ctx.request_id = request_id
         billing_ctx.user_id = user.id
         billing_ctx.start_time = start_time
 
-        # 获取并规范化模型名称
         raw_model = body.get("model", "openai/gpt-3.5-turbo")
         model = normalize_model_name(raw_model)
         billing_ctx.model = model
 
-        # 解析 provider 和实际模型名
         provider_name, actual_model = get_provider_from_model(model)
-
-        # 查找 Provider 记录
-        provider_record = await self._get_provider_record(db, provider_name, actual_model)
-
+        provider_record = await self._get_provider_record(db, provider_name, actual_model, model)
         if not provider_record:
             raise HTTPException(status_code=400, detail=f"Provider not found: {provider_name}")
 
         billing_ctx.provider_type = provider_record.provider_type.value if provider_record.provider_type else provider_name
 
-        # 获取计费策略
         strategy, _ = await BillingStrategyFactory.get_strategy_for_model(db, model)
         strategy.db = db
-
         billing_ctx.billing_mode = "token" if isinstance(strategy, TokenBasedBillingStrategy) else "request"
 
-        # 获取消息
-        messages = body.get("messages", [])
-
-        # 估算 Token 数
-        estimated_tokens = self._estimate_tokens(messages) + 2000
-
-        # 计算预估费用
+        chat_request = ChatRequest.from_http_body(body)
+        estimated_tokens = self._estimate_tokens(chat_request.messages) + 2000
         estimated_cost = await strategy.calculate_cost(model, estimated_tokens)
         estimated_price = await strategy.calculate_price(model, estimated_tokens)
-
         billing_ctx.estimated_cost = estimated_cost
         billing_ctx.estimated_price = estimated_price
 
-        # 预扣费
         has_enough = await strategy.pre_charge(user.id, estimated_price)
         if not has_enough:
             raise HTTPException(
                 status_code=402,
-                detail=f"Insufficient balance. Required: {float(estimated_price):.6f} CNY"
+                detail=f"Insufficient balance. Required: {float(estimated_price):.6f} CNY",
             )
-
         billing_ctx.pre_charged = True
 
-        is_stream = body.get("stream", False)
+        adapter, provider_ctx = await self.provider_factory.create(
+            db,
+            provider_record,
+            external_model=model,
+            actual_model=actual_model,
+            request_id=request_id,
+            require_upstream_key=not (provider_record.adapter_type or "").lower().startswith("coding_plan"),
+        )
 
         async def response_generator():
-            """响应生成器"""
             actual_tokens = 0
-            error_occurred = False
-            error_message = ""
             actual_price = estimated_price
+            actual_cost = estimated_cost
+            upstream_key_id = provider_ctx.upstream_key_id
+            error_occurred = False
+            partial_error = False
+            error_message = ""
+            saw_valid_stream_chunk = False
 
             try:
-                async for chunk, upstream_key, k_id in self._call_provider_with_retry(
-                    db, provider_record, actual_model, messages, is_stream,
-                    temperature=body.get("temperature"),
-                    max_tokens=body.get("max_tokens")
-                ):
-                    if is_stream:
-                        if chunk.startswith("data: "):
-                            try:
-                                data = json.loads(chunk[6:])
-                                if "error" in data:
-                                    error_occurred = True
-                                    error_message = data["error"].get("message", chunk)
-                                    yield chunk.encode()
-                                    yield b"data: [DONE]\n\n"
-                                    return
-                            except json.JSONDecodeError:
-                                pass
-
-                        yield chunk.encode()
-                        # 估算 token
-                        try:
-                            if chunk.startswith("data: "):
-                                data = json.loads(chunk[6:])
-                                if "choices" in data:
-                                    delta = data["choices"][0].get("delta", {})
-                                    if delta.get("content"):
-                                        actual_tokens += len(delta["content"]) // 4
-                        except:
-                            pass
-                    else:
-                        # 非流式，解析实际用量
-                        try:
-                            resp_data = json.loads(chunk)
-                            if "error" in resp_data:
-                                error_occurred = True
-                                error_message = resp_data["error"].get("message", chunk)
-                                yield chunk.encode()
-                                return
-                            usage = resp_data.get("usage", {})
-                            actual_tokens = usage.get("total_tokens", estimated_tokens)
-                            yield chunk.encode()
-                        except json.JSONDecodeError:
+                if chat_request.stream:
+                    async for chunk in adapter.stream_chat(provider_ctx, chat_request):
+                        upstream_key_id = chunk.upstream_key_id or upstream_key_id
+                        if chunk.is_valid:
+                            saw_valid_stream_chunk = True
+                            actual_tokens += chunk.token_delta
+                        if chunk.is_error:
                             error_occurred = True
-                            error_message = chunk
-                            actual_tokens = estimated_tokens
-                            yield self._error_payload(
-                                "Invalid upstream response",
-                                stream=False,
-                                error_type="invalid_upstream_response",
-                            ).encode()
-                            return
-
-            except Exception as e:
+                            partial_error = chunk.metadata.get("status") == "partial_error"
+                            error_message = chunk.metadata.get("error_message", "Upstream stream error")
+                        yield chunk.to_sse().encode()
+                else:
+                    response = await adapter.chat(provider_ctx, chat_request)
+                    upstream_key_id = response.upstream_key_id or upstream_key_id
+                    usage = response.usage or response.data.get("usage", {})
+                    actual_tokens = usage.get("total_tokens", estimated_tokens)
+                    yield json.dumps(response.data, ensure_ascii=False).encode()
+            except Exception as exc:
                 error_occurred = True
-                error_message = str(e)
-                yield json.dumps({
-                    "error": {
-                        "message": str(e),
-                        "type": "internal_error",
-                        "code": 500
-                    }
-                }).encode()
-
+                partial_error = chat_request.stream and saw_valid_stream_chunk
+                error_message = str(exc)
+                if isinstance(exc, ProviderError):
+                    upstream_key_id = exc.upstream_key_id or upstream_key_id
+                if partial_error:
+                    payload = json.dumps(
+                        {
+                            "error": {
+                                "message": str(exc),
+                                "type": "partial_stream_error",
+                                "code": getattr(exc, "status_code", 502),
+                            }
+                        },
+                        ensure_ascii=False,
+                    )
+                    yield f"data: {payload}\n\n".encode()
+                    yield b"data: [DONE]\n\n"
+                else:
+                    yield self._provider_error_payload(exc)
             finally:
-                # 计算实际费用
                 billing_ctx.end_time = time.time()
                 response_time_ms = billing_ctx.response_time_ms
 
-                if billing_ctx.billing_mode == "token":
-                    # Token 计费：基于实际 Token 数
-                    actual_cost = await strategy.calculate_cost(model, max(actual_tokens, 1))
-                    actual_price = await strategy.calculate_price(model, max(actual_tokens, 1))
-                else:
-                    # 请求计费：固定费用
-                    actual_cost = estimated_cost
-                    actual_price = estimated_price
-
-                billing_ctx.actual_cost = actual_cost
-                billing_ctx.actual_price = actual_price
-                billing_ctx.total_tokens = actual_tokens
-
-                # 处理计费
-                try:
-                    if error_occurred:
-                        # 回滚费用
+                if error_occurred and not partial_error:
+                    actual_cost = Decimal("0")
+                    actual_price = Decimal("0")
+                    billing_ctx.actual_cost = actual_cost
+                    billing_ctx.actual_price = actual_price
+                    billing_ctx.total_tokens = actual_tokens
+                    try:
                         await strategy.rollback(user.id, estimated_price)
                         billing_ctx.rolled_back = True
-
-                        # 记录失败日志
                         await strategy.record_usage(
                             user_id=user.id,
-                            upstream_key_id=None,
+                            upstream_key_id=upstream_key_id,
                             request_id=request_id,
                             model=model,
                             cost_amount=Decimal("0"),
@@ -518,57 +228,81 @@ class ProxyServiceV2:
                             completion_tokens=0,
                             response_time_ms=response_time_ms,
                             status="error",
-                            error_message=error_message[:500]
+                            error_message=error_message[:500],
                         )
-                    else:
-                        # 计算差额
-                        if billing_ctx.billing_mode == "token":
-                            price_diff = estimated_price - actual_price
-                            if price_diff > 0:
-                                # 预扣多了，回滚差额
-                                await strategy.rollback(user.id, price_diff)
+                    except Exception as finalize_error:
+                        print(f"Error in billing finalization: {finalize_error}")
+                    return
 
-                        # 记录使用日志
-                        log_id = await strategy.record_usage(
-                            user_id=user.id,
-                            upstream_key_id=None,
-                            request_id=request_id,
-                            model=model,
-                            cost_amount=actual_cost,
-                            charge_amount=actual_price,
-                            prompt_tokens=actual_tokens // 2,  # 估算
-                            completion_tokens=actual_tokens // 2,
-                            response_time_ms=response_time_ms,
-                            status="success"
-                        )
+                if billing_ctx.billing_mode == "token":
+                    actual_cost = await strategy.calculate_cost(model, max(actual_tokens, 1))
+                    actual_price = await strategy.calculate_price(model, max(actual_tokens, 1))
+                else:
+                    actual_cost = estimated_cost
+                    actual_price = estimated_price
 
-                        billing_ctx.log_id = log_id
-                        billing_ctx.confirmed = True
+                billing_ctx.actual_cost = actual_cost
+                billing_ctx.actual_price = actual_price
+                billing_ctx.total_tokens = actual_tokens
 
-                except Exception as e:
-                    print(f"Error in billing finalization: {e}")
+                try:
+                    if billing_ctx.billing_mode == "token":
+                        price_diff = estimated_price - actual_price
+                        if price_diff > 0:
+                            await strategy.rollback(user.id, price_diff)
+
+                    log_id = await strategy.record_usage(
+                        user_id=user.id,
+                        upstream_key_id=upstream_key_id,
+                        request_id=request_id,
+                        model=model,
+                        cost_amount=actual_cost,
+                        charge_amount=actual_price,
+                        prompt_tokens=actual_tokens // 2,
+                        completion_tokens=actual_tokens // 2,
+                        response_time_ms=response_time_ms,
+                        status="partial_error" if partial_error else "success",
+                        error_message=error_message[:500] if partial_error else None,
+                    )
+                    billing_ctx.log_id = log_id
+                    billing_ctx.confirmed = True
+                except Exception as finalize_error:
+                    print(f"Error in billing finalization: {finalize_error}")
 
         return StreamingResponse(
             response_generator(),
-            media_type="text/event-stream" if is_stream else "application/json",
+            media_type="text/event-stream" if chat_request.stream else "application/json",
             headers={
                 "Cache-Control": "no-cache",
                 "Connection": "keep-alive",
                 "X-Request-ID": request_id,
-            }
+            },
         )
 
     async def models(self, db: AsyncSession) -> Dict[str, Any]:
-        """获取支持的模型列表"""
+        result = await db.execute(
+            select(UpstreamProvider)
+            .where(UpstreamProvider.is_active == True)
+            .order_by(UpstreamProvider.priority.asc(), UpstreamProvider.id.asc())
+        )
+        providers = result.scalars().all()
+
+        models: Dict[str, Dict[str, Any]] = {}
+        for provider in providers:
+            try:
+                adapter, ctx = await self.provider_factory.create(
+                    db,
+                    provider,
+                    request_id=self._get_request_id(),
+                    require_upstream_key=False,
+                )
+            except Exception:
+                continue
+
+            for descriptor in await adapter.list_models(ctx):
+                models.setdefault(descriptor.id, descriptor.to_openai_dict())
+
         return {
             "object": "list",
-            "data": [
-                {
-                    "id": model_id,
-                    "object": "model",
-                    "created": 1677649963,
-                    "owned_by": model_id.split('/')[0] if '/' in model_id else "openai"
-                }
-                for model_id in self.SUPPORTED_MODELS
-            ]
+            "data": sorted(models.values(), key=lambda item: item["id"]),
         }

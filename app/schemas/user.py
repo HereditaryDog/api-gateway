@@ -9,6 +9,7 @@ from datetime import datetime
 class UserBase(BaseModel):
     username: str = Field(..., min_length=3, max_length=50)
     email: Optional[EmailStr] = None
+    phone: Optional[str] = None
     remark: Optional[str] = None
 
 
@@ -20,6 +21,7 @@ class UserCreate(UserBase):
 
 class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
+    phone: Optional[str] = None
     password: Optional[str] = Field(None, min_length=6)
     total_quota: Optional[float] = None
     is_active: Optional[bool] = None
@@ -33,6 +35,8 @@ class UserResponse(BaseModel):
     id: int
     username: str
     email: Optional[str] = None
+    phone: Optional[str] = None
+    email_verified: bool = False
     api_key: str
     points_balance: float = 0.0
     total_quota: float = 0.0
@@ -67,7 +71,7 @@ class UserResponse(BaseModel):
         except (TypeError, ValueError):
             return 60
     
-    @field_validator('is_active', 'is_admin', mode='before')
+    @field_validator('is_active', 'is_admin', 'email_verified', mode='before')
     @classmethod
     def ensure_bool(cls, v):
         """确保布尔字段为 bool 类型"""

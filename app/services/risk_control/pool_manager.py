@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
 
+from app.core.database import run_with_sqlite_retry
 from app.models.upstream import UpstreamKey, UpstreamProvider
 from app.models.billing import UpstreamKeyQuota
 from app.core.encryption import decrypt_data
@@ -264,7 +265,7 @@ class PoolManager:
                 from datetime import timedelta
                 quota.throttle_until = datetime.now(timezone.utc) + timedelta(minutes=5)
         
-        await self.db.commit()
+        await run_with_sqlite_retry(self.db.commit, session=self.db)
         
         # 更新内存中的账号信息
         if key_id in self._accounts:

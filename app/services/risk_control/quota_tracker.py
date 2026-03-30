@@ -12,7 +12,16 @@ from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
 
+from app.core.database import run_with_sqlite_retry
 from app.models.billing import UpstreamKeyQuota
+
+
+def _ensure_utc(dt):
+    if dt is None:
+        return None
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt
 
 
 class QuotaTracker:
@@ -67,7 +76,7 @@ class QuotaTracker:
                 consecutive_errors=0,
             )
             self.db.add(quota)
-            await self.db.commit()
+            await run_with_sqlite_retry(self.db.commit, session=self.db)
         
         self._quota = quota
         return quota
@@ -85,19 +94,22 @@ class QuotaTracker:
         await self._reset_expired_windows(quota)
         
         now = datetime.now(timezone.utc)
+        window_5h_reset_at = _ensure_utc(quota.window_5h_reset_at)
+        window_week_reset_at = _ensure_utc(quota.window_week_reset_at)
+        window_month_reset_at = _ensure_utc(quota.window_month_reset_at)
         
         # 检查各窗口配额
         window_5h_available = True
         window_week_available = True
         window_month_available = True
         
-        if quota.window_5h_reset_at and now < quota.window_5h_reset_at:
+        if window_5h_reset_at and now < window_5h_reset_at:
             window_5h_available = quota.window_5h_used < quota.window_5h_limit
         
-        if quota.window_week_reset_at and now < quota.window_week_reset_at:
+        if window_week_reset_at and now < window_week_reset_at:
             window_week_available = quota.window_week_used < quota.window_week_limit
         
-        if quota.window_month_reset_at and now < quota.window_month_reset_at:
+        if window_month_reset_at and now < window_month_reset_at:
             window_month_available = quota.window_month_used < quota.window_month_limit
         
         is_available = window_5h_available and window_week_available and window_month_available
@@ -107,21 +119,21 @@ class QuotaTracker:
                 "used": quota.window_5h_used,
                 "limit": quota.window_5h_limit,
                 "remaining": max(0, quota.window_5h_limit - quota.window_5h_used),
-                "reset_at": quota.window_5h_reset_at.isoformat() if quota.window_5h_reset_at else None,
+                "reset_at": window_5h_reset_at.isoformat() if window_5h_reset_at else None,
                 "available": window_5h_available,
             },
             "window_week": {
                 "used": quota.window_week_used,
                 "limit": quota.window_week_limit,
                 "remaining": max(0, quota.window_week_limit - quota.window_week_used),
-                "reset_at": quota.window_week_reset_at.isoformat() if quota.window_week_reset_at else None,
+                "reset_at": window_week_reset_at.isoformat() if window_week_reset_at else None,
                 "available": window_week_available,
             },
             "window_month": {
                 "used": quota.window_month_used,
                 "limit": quota.window_month_limit,
                 "remaining": max(0, quota.window_month_limit - quota.window_month_used),
-                "reset_at": quota.window_month_reset_at.isoformat() if quota.window_month_reset_at else None,
+                "reset_at": window_month_reset_at.isoformat() if window_month_reset_at else None,
                 "available": window_month_available,
             },
             "overall_available": is_available,
@@ -154,47 +166,53 @@ class QuotaTracker:
         quota.window_week_used += count
         quota.window_month_used += count
         
-        await self.db.commit()
+        await run_with_sqlite_retry(self.db.commit, session=self.db)
         return True
     
     async def _reset_expired_windows(self, quota: UpstreamKeyQuota):
         """重置过期窗口"""
         now = datetime.now(timezone.utc)
+        window_5h_reset_at = _ensure_utc(quota.window_5h_reset_at)
+        window_week_reset_at = _ensure_utc(quota.window_week_reset_at)
+        window_month_reset_at = _ensure_utc(quota.window_month_reset_at)
         
         # 检查5小时窗口
-        if quota.window_5h_reset_at and now >= quota.window_5h_reset_at:
+        if window_5h_reset_at and now >= window_5h_reset_at:
             quota.window_5h_used = 0
             quota.window_5h_reset_at = now + timedelta(hours=5)
         
         # 检查周窗口
-        if quota.window_week_reset_at and now >= quota.window_week_reset_at:
+        if window_week_reset_at and now >= window_week_reset_at:
             quota.window_week_used = 0
             quota.window_week_reset_at = now + timedelta(weeks=1)
         
         # 检查月窗口
-        if quota.window_month_reset_at and now >= quota.window_month_reset_at:
+        if window_month_reset_at and now >= window_month_reset_at:
             quota.window_month_used = 0
             quota.window_month_reset_at = now + timedelta(days=30)
         
-        await self.db.commit()
+        await run_with_sqlite_retry(self.db.commit, session=self.db)
     
     async def get_usage_stats(self) -> dict:
         """获取使用统计"""
         quota = await self.get_or_create_quota()
         
         now = datetime.now(timezone.utc)
+        window_5h_reset_at = _ensure_utc(quota.window_5h_reset_at)
+        window_week_reset_at = _ensure_utc(quota.window_week_reset_at)
+        window_month_reset_at = _ensure_utc(quota.window_month_reset_at)
         
         # 计算剩余配额
         window_5h_remaining = quota.window_5h_limit - quota.window_5h_used
-        if quota.window_5h_reset_at and now >= quota.window_5h_reset_at:
+        if window_5h_reset_at and now >= window_5h_reset_at:
             window_5h_remaining = quota.window_5h_limit
         
         window_week_remaining = quota.window_week_limit - quota.window_week_used
-        if quota.window_week_reset_at and now >= quota.window_week_reset_at:
+        if window_week_reset_at and now >= window_week_reset_at:
             window_week_remaining = quota.window_week_limit
         
         window_month_remaining = quota.window_month_limit - quota.window_month_used
-        if quota.window_month_reset_at and now >= quota.window_month_reset_at:
+        if window_month_reset_at and now >= window_month_reset_at:
             window_month_remaining = quota.window_month_limit
         
         return {
@@ -204,21 +222,21 @@ class QuotaTracker:
                 "limit": quota.window_5h_limit,
                 "remaining": max(0, window_5h_remaining),
                 "usage_percent": round(quota.window_5h_used / quota.window_5h_limit * 100, 2) if quota.window_5h_limit > 0 else 0,
-                "reset_at": quota.window_5h_reset_at.isoformat() if quota.window_5h_reset_at else None,
+                "reset_at": window_5h_reset_at.isoformat() if window_5h_reset_at else None,
             },
             "window_week": {
                 "used": quota.window_week_used,
                 "limit": quota.window_week_limit,
                 "remaining": max(0, window_week_remaining),
                 "usage_percent": round(quota.window_week_used / quota.window_week_limit * 100, 2) if quota.window_week_limit > 0 else 0,
-                "reset_at": quota.window_week_reset_at.isoformat() if quota.window_week_reset_at else None,
+                "reset_at": window_week_reset_at.isoformat() if window_week_reset_at else None,
             },
             "window_month": {
                 "used": quota.window_month_used,
                 "limit": quota.window_month_limit,
                 "remaining": max(0, window_month_remaining),
                 "usage_percent": round(quota.window_month_used / quota.window_month_limit * 100, 2) if quota.window_month_limit > 0 else 0,
-                "reset_at": quota.window_month_reset_at.isoformat() if quota.window_month_reset_at else None,
+                "reset_at": window_month_reset_at.isoformat() if window_month_reset_at else None,
             },
         }
     
@@ -245,4 +263,4 @@ class QuotaTracker:
         if window_month is not None:
             quota.window_month_limit = window_month
         
-        await self.db.commit()
+        await run_with_sqlite_retry(self.db.commit, session=self.db)

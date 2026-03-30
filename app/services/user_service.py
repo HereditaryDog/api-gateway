@@ -15,11 +15,13 @@ class UserService:
         user = User(
             username=data.username,
             email=data.email,
+            phone=data.phone,
             hashed_password=get_password_hash(data.password),
             api_key=generate_api_key(),
             points_balance=0,  # 默认 0 积分
             total_quota=data.total_quota,
             is_admin=data.is_admin,
+            email_verified=getattr(data, "email_verified", False),
             remark=data.remark
         )
         db.add(user)
@@ -42,6 +44,16 @@ class UserService:
     async def get_user_by_api_key(db: AsyncSession, api_key: str) -> Optional[User]:
         """通过 API Key 获取用户"""
         result = await db.execute(select(User).where(User.api_key == api_key))
+        return result.scalar_one_or_none()
+
+    @staticmethod
+    async def get_user_by_email(db: AsyncSession, email: str) -> Optional[User]:
+        result = await db.execute(select(User).where(User.email == email))
+        return result.scalar_one_or_none()
+
+    @staticmethod
+    async def get_user_by_phone(db: AsyncSession, phone: str) -> Optional[User]:
+        result = await db.execute(select(User).where(User.phone == phone))
         return result.scalar_one_or_none()
 
     @staticmethod

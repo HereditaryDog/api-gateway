@@ -14,6 +14,8 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     username = Column(String(50), unique=True, index=True, nullable=False)
     email = Column(String(100), unique=True, index=True, nullable=True)
+    phone = Column(String(30), nullable=True)
+    email_verified = Column(Boolean, default=False, nullable=False)
     hashed_password = Column(String(255), nullable=False)
     
     # API Key（用于调用转发接口）
@@ -58,6 +60,8 @@ class User(Base):
             "id": self.id,
             "username": self.username,
             "email": self.email,
+            "phone": self.phone,
+            "email_verified": bool(self.email_verified) if self.email_verified is not None else False,
             "api_key": self.api_key,
             "points_balance": float(self.points_balance or 0),
             "total_quota": float(self.total_quota or 0),
