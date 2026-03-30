@@ -1,9 +1,11 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
 from datetime import datetime
 
 
 class UsageLogResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     user_id: int
     upstream_key_id: Optional[int]
@@ -17,12 +19,10 @@ class UsageLogResponse(BaseModel):
     response_time_ms: Optional[int]
     error_message: Optional[str]
     created_at: datetime
-    
-    class Config:
-        from_attributes = True
-
 
 class QuotaLogResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     user_id: int
     change_type: str
@@ -31,10 +31,6 @@ class QuotaLogResponse(BaseModel):
     balance_after: float
     description: Optional[str]
     created_at: datetime
-    
-    class Config:
-        from_attributes = True
-
 
 class DashboardStats(BaseModel):
     # 总体统计

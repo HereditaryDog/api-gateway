@@ -6,6 +6,7 @@ from fastapi.responses import FileResponse
 import os
 
 from app.core.config import get_settings
+from app.core.bootstrap import ensure_admin_user
 from app.core.database import init_db
 from app.routers import auth_router, users_router, upstream_router, usage_router, proxy_router
 from app.middleware.rate_limit import RateLimitMiddleware
@@ -19,6 +20,9 @@ async def lifespan(app: FastAPI):
     """应用生命周期管理"""
     # 启动时执行
     await init_db()
+    created_admin = await ensure_admin_user()
+    if created_admin:
+        print(f"[START] Admin user '{settings.ADMIN_USERNAME}' created.")
     print(f"[START] {settings.PLATFORM_NAME} started!")
     yield
     # 关闭时执行

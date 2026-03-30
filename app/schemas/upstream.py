@@ -1,10 +1,12 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional, Dict, Any
 from datetime import datetime
 from app.models.upstream import ProviderType
 
 
 class ProviderBase(BaseModel):
+    model_config = ConfigDict(protected_namespaces=())
+
     name: str = Field(..., min_length=1, max_length=50)
     provider_type: ProviderType
     base_url: str = Field(..., description="API 基础 URL")
@@ -18,6 +20,8 @@ class ProviderCreate(ProviderBase):
 
 
 class ProviderUpdate(BaseModel):
+    model_config = ConfigDict(protected_namespaces=())
+
     name: Optional[str] = None
     base_url: Optional[str] = None
     model_mapping: Optional[Dict[str, str]] = None
@@ -27,13 +31,12 @@ class ProviderUpdate(BaseModel):
 
 
 class ProviderResponse(ProviderBase):
+    model_config = ConfigDict(from_attributes=True, protected_namespaces=())
+
     id: int
     is_active: bool
     created_at: datetime
     updated_at: Optional[datetime] = None
-    
-    class Config:
-        from_attributes = True
 
 
 class UpstreamKeyBase(BaseModel):
@@ -60,6 +63,8 @@ class UpstreamKeyUpdate(BaseModel):
 
 
 class UpstreamKeyResponse(UpstreamKeyBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     encrypted_key: str = Field(..., description="加密后的Key (仅显示前8位)")
     is_active: bool
@@ -69,6 +74,3 @@ class UpstreamKeyResponse(UpstreamKeyBase):
     health_score: float
     created_at: datetime
     last_used_at: Optional[datetime] = None
-    
-    class Config:
-        from_attributes = True

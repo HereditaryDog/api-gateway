@@ -63,6 +63,7 @@ class OpenAICompatProvider(BaseProvider):
         
         async with httpx.AsyncClient() as client:
             async with client.stream("POST", url, json=payload, headers=headers, timeout=60) as response:
+                response.raise_for_status()
                 async for line in response.aiter_lines():
                     if line.startswith("data: "):
                         data = line[6:]

@@ -1,34 +1,38 @@
-version: '3.8'
-
 services:
   app:
     build: .
     container_name: api-gateway
-    restart: always
+    restart: unless-stopped
     ports:
       - "${PORT:-8080}:8000"
     environment:
-      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/apigateway
-      - REDIS_URL=redis://redis:6379/0
-      - SECRET_KEY=${SECRET_KEY:-your-super-secret-key-change-in-production}
-      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
+      DATABASE_URL: ${DATABASE_URL:-sqlite+aiosqlite:///./data/app.db}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      SECRET_KEY: ${SECRET_KEY:-change-me-in-production}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
+      PLATFORM_URL: ${PLATFORM_URL:-http://localhost:${PORT:-8080}}
     volumes:
       - ./data:/app/data
-    depends_on:
-      - db
-      - redis
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"from urllib.request import urlopen; urlopen('http://127.0.0.1:8000/health')\""]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     networks:
       - api-gateway
 
   db:
     image: postgres:15-alpine
     container_name: api-gateway-db
-    restart: always
+    restart: unless-stopped
+    profiles:
+      - infra
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=apigateway
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: apigateway
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -37,7 +41,9 @@ services:
   redis:
     image: redis:7-alpine
     container_name: api-gateway-redis
-    restart: always
+    restart: unless-stopped
+    profiles:
+      - infra
     volumes:
       - redis_data:/data
     networks:
@@ -47,7 +53,9 @@ services:
   nginx:
     image: nginx:alpine
     container_name: api-gateway-nginx
-    restart: always
+    restart: unless-stopped
+    profiles:
+      - proxy
     ports:
       - "80:80"
       - "443:443"
@@ -55,7 +63,8 @@ services:
       - ./nginx.conf:/etc/nginx/nginx.conf
       - ./frontend:/usr/share/nginx/html
     depends_on:
-      - app
+      app:
+        condition: service_healthy
     networks:
       - api-gateway
 

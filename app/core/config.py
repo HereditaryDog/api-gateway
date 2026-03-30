@@ -1,40 +1,59 @@
-from pydantic_settings import BaseSettings
+import os
 from functools import lru_cache
-from app.core.yaml_config import yaml_settings
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from app.core.yaml_config import load_yaml_config
 
 
 class Settings(BaseSettings):
     """应用配置"""
-    
-    # 从 YAML 加载配置
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=True,
+        extra="ignore",
+    )
+
     @classmethod
     def from_yaml(cls):
-        config = yaml_settings
-        return cls(
+        config = load_yaml_config()
+        defaults = {
             # 数据库
-            DATABASE_URL=cls._get_database_url(config),
-            
+            "DATABASE_URL": cls._get_database_url(config),
+
             # Redis
-            REDIS_URL=config.get('redis', {}).get('url', 'redis://localhost:6379/0'),
-            
+            "REDIS_URL": config.get('redis', {}).get('url', 'redis://localhost:6379/0'),
+
             # JWT
-            SECRET_KEY=config.get('security', {}).get('jwt_secret', 'your-secret'),
-            
+            "SECRET_KEY": config.get('security', {}).get('jwt_secret', 'your-secret'),
+            "ALGORITHM": config.get('security', {}).get('algorithm', 'HS256'),
+            "ACCESS_TOKEN_EXPIRE_MINUTES": config.get('security', {}).get('access_token_expire_minutes', 10080),
+
             # 管理员
-            ADMIN_USERNAME=config.get('admin', {}).get('username', 'admin'),
-            ADMIN_PASSWORD=config.get('admin', {}).get('password', 'admin123'),
-            
+            "ADMIN_USERNAME": config.get('admin', {}).get('username', 'admin'),
+            "ADMIN_PASSWORD": config.get('admin', {}).get('password', 'admin123'),
+
             # 平台信息
-            PLATFORM_NAME="API Gateway",
-            PLATFORM_URL="http://localhost:8000",
-            
+            "PLATFORM_NAME": config.get('platform', {}).get('name', 'API Gateway'),
+            "PLATFORM_URL": config.get('platform', {}).get('url', 'http://localhost:8000'),
+
             # 日志
-            LOG_LEVEL=config.get('logging', {}).get('level', 'INFO'),
-            
+            "LOG_LEVEL": config.get('logging', {}).get('level', 'INFO'),
+
+            # 配额
+            "DEFAULT_QUOTA_K": config.get('quota', {}).get('default_quota_k', 1000),
+
             # 上游配置
-            UPSTREAM_TIMEOUT=config.get('timeout', {}).get('request_timeout', 60),
-            MAX_RETRIES=config.get('key_management', {}).get('max_retry', 2),
-        )
+            "UPSTREAM_TIMEOUT": config.get('timeout', {}).get('request_timeout', 60),
+            "MAX_RETRIES": config.get('key_management', {}).get('max_retry', 2),
+        }
+
+        # BaseSettings 无法覆盖显式传入的 init kwargs，这里手动让环境变量拥有更高优先级。
+        for field_name in cls.model_fields:
+            if field_name in os.environ:
+                defaults[field_name] = os.environ[field_name]
+
+        return cls.model_validate(defaults)
     
     @staticmethod
     def _get_database_url(config: dict) -> str:
@@ -86,11 +105,6 @@ class Settings(BaseSettings):
     UPSTREAM_TIMEOUT: int = 60
     MAX_RETRIES: int = 2
     
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
-
-
 @lru_cache()
 def get_settings() -> Settings:
     return Settings.from_yaml()

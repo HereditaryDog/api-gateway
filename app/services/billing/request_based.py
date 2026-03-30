@@ -10,7 +10,7 @@ from sqlalchemy import text, select
 from app.services.billing.base import BillingStrategy
 from app.models.user import User
 from app.models.billing import RequestLog, BillingMode, ProviderBillingConfig
-from app.models.upstream import UpstreamProvider
+from app.models.upstream import UpstreamKey, UpstreamProvider
 
 
 class RequestBasedBillingStrategy(BillingStrategy):

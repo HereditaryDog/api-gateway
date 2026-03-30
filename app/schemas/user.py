@@ -1,7 +1,7 @@
 """
 用户相关的 Pydantic 模型
 """
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 from typing import Optional
 from datetime import datetime
 
@@ -28,6 +28,8 @@ class UserUpdate(BaseModel):
 
 
 class UserResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
     id: int
     username: str
     email: Optional[str] = None
@@ -73,12 +75,6 @@ class UserResponse(BaseModel):
             return False
         return bool(v)
     
-    class Config:
-        from_attributes = True
-        # 允许从 ORM 模型自动转换
-        populate_by_name = True
-
-
 class UserQuotaInfo(BaseModel):
     total_quota: float = 0.0
     used_quota: float = 0.0

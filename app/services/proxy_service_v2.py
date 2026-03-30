@@ -103,6 +103,27 @@ class ProxyServiceV2:
 
         return max(1, total_chars // 4)
 
+    def _error_payload(
+        self,
+        message: str,
+        stream: bool = False,
+        error_type: str = "upstream_error",
+        code: int = 502
+    ) -> str:
+        payload = json.dumps(
+            {
+                "error": {
+                    "message": message,
+                    "type": error_type,
+                    "code": code,
+                }
+            },
+            ensure_ascii=False,
+        )
+        if stream:
+            return f"data: {payload}\n\n"
+        return payload
+
     async def _get_provider_record(
         self,
         db: AsyncSession,
@@ -212,7 +233,7 @@ class ProxyServiceV2:
         excluded_key_ids = []
 
         if not provider_record:
-            yield ("Provider not found", None, None)
+            yield (self._error_payload("Provider not found", stream=stream, code=400), None, None)
             return
 
         # 应用 model_mapping 转换模型名称
@@ -226,7 +247,14 @@ class ProxyServiceV2:
                 )
 
                 if not provider:
-                    yield ("No available upstream key for this provider", None, None)
+                    yield (
+                        self._error_payload(
+                            "No available upstream key for this provider",
+                            stream=stream,
+                        ),
+                        None,
+                        None,
+                    )
                     return
 
                 # 对于 Coding Plan 适配器，不需要额外处理 key
@@ -299,7 +327,14 @@ class ProxyServiceV2:
                 if attempt < max_retries - 1:
                     continue
                 else:
-                    yield (f"All upstream keys failed: {str(e)}", None, None)
+                    yield (
+                        self._error_payload(
+                            f"All upstream keys failed: {str(e)}",
+                            stream=stream,
+                        ),
+                        None,
+                        None,
+                    )
                     return
 
     async def chat_completions(
@@ -388,14 +423,19 @@ class ProxyServiceV2:
                     temperature=body.get("temperature"),
                     max_tokens=body.get("max_tokens")
                 ):
-                    if upstream_key is None and chunk.startswith('{"error"'):
-                        # 发生错误
-                        error_occurred = True
-                        error_message = chunk
-                        yield chunk.encode()
-                        return
-
                     if is_stream:
+                        if chunk.startswith("data: "):
+                            try:
+                                data = json.loads(chunk[6:])
+                                if "error" in data:
+                                    error_occurred = True
+                                    error_message = data["error"].get("message", chunk)
+                                    yield chunk.encode()
+                                    yield b"data: [DONE]\n\n"
+                                    return
+                            except json.JSONDecodeError:
+                                pass
+
                         yield chunk.encode()
                         # 估算 token
                         try:
@@ -411,12 +451,24 @@ class ProxyServiceV2:
                         # 非流式，解析实际用量
                         try:
                             resp_data = json.loads(chunk)
+                            if "error" in resp_data:
+                                error_occurred = True
+                                error_message = resp_data["error"].get("message", chunk)
+                                yield chunk.encode()
+                                return
                             usage = resp_data.get("usage", {})
                             actual_tokens = usage.get("total_tokens", estimated_tokens)
                             yield chunk.encode()
-                        except:
+                        except json.JSONDecodeError:
+                            error_occurred = True
+                            error_message = chunk
                             actual_tokens = estimated_tokens
-                            yield chunk.encode()
+                            yield self._error_payload(
+                                "Invalid upstream response",
+                                stream=False,
+                                error_type="invalid_upstream_response",
+                            ).encode()
+                            return
 
             except Exception as e:
                 error_occurred = True
